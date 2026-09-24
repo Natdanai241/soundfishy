@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>SOUND FISHY 🐟 v3 — กำจัดปลาเน่า ล่าปลาสด</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{
+  --d1:#01081a;--d2:#062446;--d3:#0a5e93;--aqua:#35ecf6;--aqua2:#0fb9d6;
+  --gold:#ffd86b;--coral:#ff6b8b;--lime:#7bf59a;--violet:#b18bff;
+  --ink:#03223a;--w:#f0fbff;
+  --g1:rgba(255,255,255,.15);--g2:rgba(255,255,255,.045);
+  --shadow:0 24px 55px rgba(0,6,22,.6);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;min-height:100%}
+body{
+  font-family:"Trebuchet MS","Segoe UI",system-ui,-apple-system,"Noto Sans Thai",sans-serif;
+  color:var(--w);overflow-x:hidden;
+  background:
+   radial-gradient(1300px 640px at 15% -8%,rgba(53,236,246,.30),transparent 62%),
+   radial-gradient(1000px 540px at 92% 6%,rgba(177,139,255,.24),transparent 62%),
+   radial-gradient(800px 500px at 50% 105%,rgba(255,216,107,.10),transparent 60%),
+   linear-gradient(180deg,#0cb0d2 0%,var(--d3) 22%,var(--d2) 58%,var(--d1) 100%);
+  background-attachment:fixed;
+}
+#bg{position:fixed;inset:0;overflow:hidden;z-index:0;pointer-events:none}
+.ray{position:absolute;top:-35%;width:150px;height:170%;
+  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0));
+  filter:blur(18px);transform:rotate(13deg);animation:ray 14s ease-in-out infinite}
+@keyframes ray{0%,100%{opacity:.16;transform:rotate(9deg) translateX(0)}50%{opacity:.52;transform:rotate(17deg) translateX(40px)}}
+.bub{position:absolute;bottom:-70px;border-radius:50%;
+  background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.95),rgba(255,255,255,.07));
+  box-shadow:inset 0 0 9px rgba(255,255,255,.55);animation:rise linear infinite}
+@keyframes rise{0%{transform:translateY(0) translateX(0);opacity:0}12%{opacity:.82}88%{opacity:.42}100%{transform:translateY(-120vh) translateX(52px);opacity:0}}
+.swim{position:absolute;animation:swim linear infinite;filter:drop-shadow(0 8px 14px rgba(0,0,0,.5))}
+@keyframes swim{0%{transform:translateX(-16vw) scaleX(1) translateY(0)}49%{transform:translateX(58vw) scaleX(1) translateY(-20px)}
+50%{transform:translateX(58vw) scaleX(-1) translateY(-20px)}100%{transform:translateX(-16vw) scaleX(-1) translateY(0)}}
+#floor{position:fixed;left:0;right:0;bottom:0;height:135px;z-index:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(1,8,26,0),rgba(1,8,26,.92));
+  display:flex;align-items:flex-end;justify-content:space-around;font-size:44px;opacity:.78}
+#floor span{animation:sway 5s ease-in-out infinite;transform-origin:bottom center}
+#floor span:nth-child(even){animation-duration:7s}
+@keyframes sway{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+
+#app{position:relative;z-index:2;max-width:790px;margin:0 auto;padding:10px 14px 175px}
+.screen{display:none;animation:pop .36s cubic-bezier(.2,.9,.3,1.25)}
+.screen.active{display:block}
+@keyframes pop{from{opacity:0;transform:translateY(20px) scale(.972)}to{opacity:1;transform:none}}
+.card{
+  position:relative;border-radius:26px;padding:19px;margin-bottom:14px;
+  background:linear-gradient(158deg,var(--g1),var(--g2));
+  border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(14px);
+  box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.42),inset 0 -26px 46px rgba(0,0,0,.2);
+  overflow:hidden;
+}
+.card::before{content:"";position:absolute;left:14%;right:14%;top:0;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent)}
+.card::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(118deg,rgba(255,255,255,.14),transparent 40%)}
+h1{font-size:clamp(28px,7.6vw,47px);margin:10px 0 2px;text-align:center;letter-spacing:3px;font-weight:900;
+  background:linear-gradient(100deg,#fff 0%,var(--aqua) 38%,#8fe9ff 52%,#0a93b8 100%);
+  background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 8px 20px rgba(0,0,0,.5));animation:shine 6s linear infinite}
+@keyframes shine{0%{background-position:0% 50%}100%{background-position:220% 50%}}
+h2{font-size:20px;margin:0 0 10px;letter-spacing:.3px}
+h3{font-size:16px;margin:0 0 8px;color:var(--gold);letter-spacing:.5px}
+p{line-height:1.62;margin:6px 0}
+.sub{text-align:center;opacity:.92;margin:0 0 16px;font-size:13.5px;letter-spacing:1.3px}
+.small{font-size:12.8px;opacity:.86;line-height:1.55}
+.center{text-align:center}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1 1 140px}
+.tag{font-size:11.5px;letter-spacing:1.7px;opacity:.82;text-transform:uppercase}
+
+button{position:relative;overflow:hidden;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer;
+  border:0;border-radius:19px;padding:15px 16px;width:100%;color:var(--ink);letter-spacing:.3px;
+  background:linear-gradient(180deg,#c2f7ff,#2ecbe8);
+  box-shadow:0 7px 0 #0a7791,0 16px 30px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.75);
+  transition:transform .08s,box-shadow .08s,filter .18s}
+button::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);
+  transform:skewX(-20deg);animation:sheen 5.5s ease-in-out infinite}
+@keyframes sheen{0%,72%{left:-70%}88%,100%{left:130%}}
+button:active:not(:disabled){transform:translateY(5px);box-shadow:0 2px 0 #0a7791,0 6px 16px rgba(0,0,0,.42)}
+button:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.45)}
+button:disabled::after{display:none}
+.b-gold{background:linear-gradient(180deg,#ffeda6,#ffab14);box-shadow:0 7px 0 #a56600,0 16px 30px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.75)}
+.b-red{background:linear-gradient(180deg,#ffb0bb,#f33a5c);color:#fff;box-shadow:0 7px 0 #8d0f27,0 16px 30px rgba(0,0,0,.42)}
+.b-green{background:linear-gradient(180deg,#c3ffcb,#3ad368);box-shadow:0 7px 0 #17752e,0 16px 30px rgba(0,0,0,.42)}
+.b-violet{background:linear-gradient(180deg,#dfd0ff,#8d68f2);color:#fff;box-shadow:0 7px 0 #4725a6,0 16px 30px rgba(0,0,0,.42)}
+.b-ghost{background:rgba(255,255,255,.12);color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.3),inset 0 0 0 1px rgba(255,255,255,.22)}
+
+.counter{display:flex;align-items:center;justify-content:center;gap:18px;margin:6px 0}
+.counter button{width:58px;height:58px;border-radius:50%;font-size:28px;padding:0;flex:none}
+.bignum{font-size:46px;font-weight:900;min-width:72px;text-align:center;color:var(--gold);
+  text-shadow:0 6px 18px rgba(0,0,0,.55)}
+.stats{display:flex;gap:10px;text-align:center}
+.stat{flex:1;background:rgba(0,0,0,.3);border-radius:17px;padding:11px 6px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 6px 14px rgba(0,0,0,.25)}
+.stat b{display:block;font-size:23px;color:var(--aqua)}
+input[type=text]{width:100%;font-family:inherit;font-size:16px;padding:13px 15px;border-radius:16px;
+  border:1px solid rgba(255,255,255,.26);background:rgba(0,0,0,.32);color:#fff;outline:none}
+input[type=text]:focus{border-color:var(--aqua);box-shadow:0 0 0 3px rgba(53,236,246,.26)}
+#codeInput{text-align:center;letter-spacing:9px;font-size:27px;font-weight:900;text-transform:uppercase}
+.emojiBtn{width:64px;height:64px;flex:none;border-radius:21px;font-size:34px;padding:0;
+  background:linear-gradient(180deg,#fff,#d3f0ff);box-shadow:0 6px 0 #6ba5ba,0 12px 22px rgba(0,0,0,.36)}
+.egrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.egrid button{font-size:29px;padding:11px 0;border-radius:17px;background:rgba(255,255,255,.11);
+  color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.egrid button.sel{background:linear-gradient(180deg,#ffeda6,#ffab14);box-shadow:0 5px 0 #a56600;transform:translateY(-2px)}
+.qbox{background:linear-gradient(160deg,#fffef5,#ffe6a6);color:#2b2105;border-radius:21px;padding:17px;
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.7),0 14px 30px rgba(0,0,0,.42);font-size:18.5px;font-weight:800;line-height:1.6}
+.abox{margin-top:12px;background:linear-gradient(160deg,#d2ffe6,#46e7a3);color:#02301e;border-radius:21px;padding:16px;
+  text-align:center;box-shadow:inset 0 0 0 3px rgba(255,255,255,.62),0 14px 30px rgba(0,0,0,.42);animation:pop .35s}
+.abox .v{font-size:26px;font-weight:900;margin-top:2px}
+.lockbox{margin-top:12px;border-radius:21px;padding:17px;text-align:center;font-weight:800;color:#a9d8ff;
+  background:repeating-linear-gradient(45deg,#0f3558,#0f3558 13px,#0b2743 13px,#0b2743 26px);
+  border:2px dashed rgba(255,255,255,.26)}
+.roleCard{border-radius:23px;padding:15px;text-align:center;margin:12px 0;position:relative;overflow:hidden}
+.roleCard::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(255,255,255,.4),transparent 60%)}
+.roleCard .em{font-size:66px;display:block;animation:wig 1.8s ease-in-out infinite;position:relative}
+.roleCard .t{font-size:23px;font-weight:900;letter-spacing:1px;margin-top:2px;position:relative}
+.roleCard .small{position:relative}
+@keyframes wig{0%,100%{transform:rotate(-9deg) translateY(0)}50%{transform:rotate(9deg) translateY(-8px)}}
+.r-fresh{background:linear-gradient(160deg,#bdfaff,#23c3f2);color:#03293d;box-shadow:0 16px 36px rgba(0,0,0,.5)}
+.r-rotten{background:linear-gradient(160deg,#e5d2ff,#8a65dd);color:#1b0d3a;box-shadow:0 16px 36px rgba(0,0,0,.5)}
+.r-rotten .em{animation:rot 2.3s ease-in-out infinite}
+@keyframes rot{0%,100%{transform:rotate(-15deg) scale(1)}50%{transform:rotate(15deg) scale(1.1) skewX(-7deg)}}
+.r-q{background:linear-gradient(160deg,#ffeeb8,#ffa90f);color:#3a2400;box-shadow:0 16px 36px rgba(0,0,0,.5)}
+.list{list-style:none;padding:0;margin:0}
+.list li{background:rgba(0,0,0,.24);border-radius:16px;padding:11px 14px;margin-bottom:8px;
+  display:flex;justify-content:space-between;gap:10px;align-items:center;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.list li b{color:var(--gold)}
+.list li .why{font-size:11.5px;opacity:.8;display:block;font-weight:400;color:#cfe9ff}
+.pill{display:inline-block;padding:4px 11px;border-radius:999px;background:rgba(0,0,0,.32);font-size:12px;margin-left:6px}
+.pill.on{background:#2fc46f;color:#04240f}.pill.off{background:#8a3b3b}
+.pill.fresh{background:#23c3f2;color:#03293d}.pill.rot{background:#8a65dd;color:#fff}
+
+#hud{display:none;position:relative;z-index:3;max-width:790px;margin:0 auto 6px;padding:0 14px}
+#hud.on{display:block}
+#hudCard{border-radius:22px;padding:11px 13px;background:linear-gradient(158deg,rgba(255,255,255,.17),rgba(255,255,255,.05));
+  border:1px solid rgba(255,255,255,.2);box-shadow:0 16px 34px rgba(0,4,18,.55);backdrop-filter:blur(12px)}
+#hudHead{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;letter-spacing:1px;opacity:.92;margin-bottom:8px}
+#hudList{display:flex;gap:8px;overflow-x:auto;padding-bottom:3px}
+.hp{flex:none;min-width:88px;text-align:center;border-radius:16px;padding:8px 9px;background:rgba(0,0,0,.3);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14);position:relative;transition:transform .2s}
+.hp.me{outline:2px solid var(--aqua);transform:translateY(-3px)}
+.hp.isq{background:linear-gradient(160deg,rgba(255,216,107,.38),rgba(0,0,0,.3))}
+.hp .e{font-size:26px;display:block;line-height:1.1}
+.hp .n{font-size:11.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;margin:1px auto}
+.hp .s{font-size:19px;font-weight:900;color:var(--gold)}
+.hp .off{position:absolute;top:3px;right:6px;font-size:10px;opacity:.85}
+
+.huntGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(152px,1fr));gap:12px;perspective:1000px}
+.hcard{border-radius:21px;padding:14px 10px;text-align:center;font-weight:800;position:relative;
+  background:linear-gradient(180deg,#eefaff,#a4dcf2);color:#053045;transform-style:preserve-3d;
+  box-shadow:0 7px 0 #4a8ba6,0 16px 26px rgba(0,0,0,.4);border:0;font-size:15px}
+.hcard .e{font-size:40px;display:block;line-height:1.1}
+.hcard.done-rot{background:linear-gradient(180deg,#d9c8fb,#8a65dd);color:#fff;box-shadow:0 5px 0 #482a92;animation:revPop .55s}
+.hcard.done-fresh{background:linear-gradient(180deg,#c6f6ff,#23c3f2);color:#03293d;box-shadow:0 5px 0 #0a7791;animation:revPop .55s, flash .6s ease 2}
+@keyframes revPop{0%{transform:scale(.7) rotateY(90deg);opacity:.2}60%{transform:scale(1.08) rotateY(0);opacity:1}100%{transform:scale(1)}}
+@keyframes flash{0%,100%{filter:brightness(1)}50%{filter:brightness(1.55)}}
+.hcard.spin{animation:spin3d 1.6s cubic-bezier(.25,.05,.25,1);
+  background:linear-gradient(180deg,#ffeda6,#ffab14);color:#3a2400;box-shadow:0 7px 0 #a56600,0 0 34px rgba(255,216,107,.8)}
+@keyframes spin3d{0%{transform:rotateY(0)}100%{transform:rotateY(1800deg)}}
+.hcard.spin .e{animation:qpulse .35s steps(1) infinite}
+@keyframes qpulse{0%{opacity:1}50%{opacity:.25}100%{opacity:1}}
+
+.res{background:rgba(0,0,0,.26);border-radius:19px;padding:13px;margin:10px 0;box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.big{font-size:21px;font-weight:900}
+.win{color:var(--lime)}.lose{color:#ff9fb0}
+#topbar{position:relative;z-index:3;display:flex;gap:8px;justify-content:flex-end;max-width:790px;margin:0 auto;padding:10px 14px 4px}
+#topbar button{width:auto;flex:none;padding:8px 12px;font-size:12.5px;border-radius:14px}
+.modal{display:none;position:fixed;inset:0;z-index:600;background:rgba(1,9,22,.88);backdrop-filter:blur(6px);overflow-y:auto;padding:26px 14px}
+.modal.active{display:block}.modal .inner{max-width:640px;margin:0 auto}
+#errorPanel{display:none;position:fixed;left:0;right:0;bottom:0;z-index:999;background:#a90d0e;color:#fff;
+  padding:12px 14px;font-size:12.5px;max-height:45vh;overflow:auto;border-top:3px solid #ff7b7b}
+#errorPanel b{display:block;margin-bottom:4px;font-size:15px}
+#errorPanel pre{white-space:pre-wrap;word-break:break-word;margin:4px 0;font-size:11.5px}
+#errClose{width:auto;padding:6px 12px;font-size:12px;margin-top:6px}
+#codeBox{font-size:42px;font-weight:900;letter-spacing:11px;text-align:center;color:var(--gold);
+  text-shadow:0 8px 22px rgba(0,0,0,.55);padding:8px 0}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:800;
+  background:rgba(0,0,0,.88);color:#fff;padding:11px 18px;border-radius:15px;font-size:14px;display:none;
+  box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.toast.on{display:block;animation:pop .3s}
+.srcline{font-size:11.5px;opacity:.8;margin-top:8px;text-align:center;color:#bfe6ff}
+</style>
+</head>
+<body>
+<div id="bg" aria-hidden="true"></div>
+<div id="floor" aria-hidden="true"><span>🪸</span><span>🌿</span><span>🐚</span><span>🪸</span><span>🌱</span><span>⭐</span><span>🌿</span></div>
+
+<div id="topbar">
+  <button id="btnSfx" class="b-ghost" type="button">🔊 SFX</button>
+  <button id="btnMusic" class="b-ghost" type="button">🎵 OFF</button>
+  <button id="btnHelp" class="b-ghost" type="button">❓ กติกา</button>
+</div>
+
+<div id="hud"><div id="hudCard">
+  <div id="hudHead"><span id="hudTurn">—</span><span id="hudRoom"></span></div>
+  <div id="hudList"></div>
+</div></div>
+
+<main id="app">
+
+<section id="sc-home" class="screen active">
+  <h1>SOUND FISHY</h1>
+  <p class="sub">🔪 กำจัดปลาเน่า • ล่าปลาสดตัวเดียวที่รู้คำตอบ</p>
+
+  <div class="card">
+    <h2>🎮 เลือกโหมด</h2>
+    <button id="btnLocal" class="b-gold" type="button" style="margin-bottom:10px">📱 Local — เครื่องเดียว ส่งต่อกันดู</button>
+    <button id="btnCreate" class="b-green" type="button" style="margin-bottom:10px">🌐 สร้างห้องเล่นกับเพื่อน</button>
+    <button id="btnJoin" class="b-violet" type="button">🔑 เข้าร่วมห้องด้วยรหัส</button>
+    <button id="btnRejoin" class="b-ghost" type="button" style="margin-top:10px;display:none">↩️ กลับเข้าห้องเดิม</button>
+    <p class="small center" id="netNote" style="margin-top:10px"></p>
+  </div>
+
+  <div class="card">
+    <h2>📚 คลังคำถาม (Trivia จริง)</h2>
+    <div class="stats">
+      <div class="stat"><b id="stUsed">0</b><span class="small">ใช้แล้ว</span></div>
+      <div class="stat"><b id="stLeft">0</b><span class="small">คงเหลือ</span></div>
+      <div class="stat"><b id="stAll">0</b><span class="small">ทั้งหมด</span></div>
+    </div>
+    <p class="small center" id="stNote" style="margin-top:10px"></p>
+    <button id="btnResetQ" class="b-red" type="button">♻️ Reset Question History</button>
+  </div>
+</section>
+
+<section id="sc-profile" class="screen">
+  <h1 style="font-size:30px">โปรไฟล์ผู้เล่น</h1>
+  <div class="card">
+    <h3>เลือกตัวละคร (20 แบบ)</h3>
+    <div class="egrid" id="avaGrid"></div>
+    <h3 style="margin-top:16px">ชื่อของคุณ</h3>
+    <input type="text" id="profName" maxlength="14" placeholder="พิมพ์ชื่อ...">
+  </div>
+  <div class="row">
+    <button id="btnProfBack" class="b-ghost" type="button">◀ กลับ</button>
+    <button id="btnProfGo" class="b-gold" type="button">ต่อไป ▶</button>
+  </div>
+</section>
+
+<section id="sc-join" class="screen">
+  <h1 style="font-size:30px">เข้าร่วมห้อง</h1>
+  <div class="card">
+    <h3>ใส่รหัสห้อง 5 ตัว</h3>
+    <input type="text" id="codeInput" maxlength="5" placeholder="ABCDE">
+    <p class="small center" id="joinStatus" style="margin-top:10px"></p>
+    <p class="small center">รหัสไม่มีตัวเลข 0/1 และไม่มีตัวอักษร O/I/L เพื่อกันการอ่านผิด</p>
+  </div>
+  <div class="row">
+    <button id="btnJoinBack" class="b-ghost" type="button">◀ กลับ</button>
+    <button id="btnJoinGo" class="b-violet" type="button">🔑 เข้าห้อง</button>
+  </div>
+</section>
+
+<section id="sc-lobby" class="screen">
+  <h1 style="font-size:28px">ห้องเล่น</h1>
+  <div class="card center">
+    <p class="tag">รหัสห้อง — บอกเพื่อนให้กรอก</p>
+    <div id="codeBox">—</div>
+    <button id="btnCopy" class="b-ghost" type="button">📋 คัดลอกรหัส</button>
+    <p class="small" id="lobNet" style="margin-top:8px">—</p>
+  </div>
+  <div class="card">
+    <h3>👥 ผู้เล่นในห้อง (<span id="lobCount">0</span>/10)</h3>
+    <ul class="list" id="lobList"></ul>
+  </div>
+  <div class="card" id="lobHostBox">
+    <h3>⚙️ จำนวนรอบที่แต่ละคนได้เป็นคนถาม</h3>
+    <div class="counter">
+      <button id="rppMinus" class="b-ghost" type="button">−</button>
+      <div class="bignum" id="rppVal">2</div>
+      <button id="rppPlus" class="b-ghost" type="button">+</button>
+    </div>
+    <p class="small center" id="rppNote">รวมทั้งหมด — ตา</p>
+    <button id="btnHostStart" class="b-gold" type="button" style="margin-top:8px">🎬 เริ่มเกม</button>
+  </div>
+  <p class="small center" id="lobWait" style="display:none">⏳ รอเจ้าของห้องกดเริ่มเกม...</p>
+  <button id="btnLeave" class="b-red" type="button" style="margin-top:10px">🚪 ออกจากห้อง</button>
+</section>
+
+<section id="sc-setup" class="screen">
+  <h1 style="font-size:28px">ตั้งค่าเกม Local</h1>
+  <div class="card">
+    <h3>จำนวนผู้เล่น (3–10)</h3>
+    <div class="counter">
+      <button id="pMinus" class="b-ghost" type="button">−</button>
+      <div class="bignum" id="pVal">5</div>
+      <button id="pPlus" class="b-ghost" type="button">+</button>
+    </div>
+    <h3 style="margin-top:14px">แต่ละคนได้เป็นคนถามกี่รอบ (1–5)</h3>
+    <div class="counter">
+      <button id="lrMinus" class="b-ghost" type="button">−</button>
+      <div class="bignum" id="lrVal">2</div>
+      <button id="lrPlus" class="b-ghost" type="button">+</button>
+    </div>
+    <p class="small center" id="lrNote"></p>
+  </div>
+  <div class="card">
+    <h3>ชื่อ & ตัวละคร</h3>
+    <div id="setupList"></div>
+  </div>
+  <div class="row">
+    <button id="btnSetupBack" class="b-ghost" type="button">◀ กลับ</button>
+    <button id="btnSetupGo" class="b-gold" type="button">🎬 เริ่มเกม</button>
+  </div>
+</section>
+
+<section id="sc-deal" class="screen">
+  <div class="card center">
+    <p class="tag">ตาที่ <span id="dealTurn">1</span> • ดูข้อมูลลับทีละคน</p>
+    <div style="font-size:74px;margin:6px 0">📱➡️</div>
+    <p class="small">ส่งเครื่องให้</p>
+    <div class="big" id="dealName" style="font-size:32px;color:var(--gold);margin:6px 0">—</div>
+    <button id="btnDealOpen" class="b-gold" type="button">👀 เปิดดูของฉัน</button>
+    <p class="small" style="margin-top:10px">เหลืออีก <span id="dealLeft">0</span> คน</p>
+  </div>
+</section>
+
+<section id="sc-card" class="screen">
+  <div class="card">
+    <p class="tag center">ข้อมูลของ <b id="cardOwner">—</b></p>
+    <div id="cardRole" class="roleCard r-fresh">
+      <span class="em" id="cardEm">🐟</span>
+      <div class="t" id="cardT">—</div>
+      <div class="small" id="cardH">—</div>
+    </div>
+    <h3 id="cardCat">หมวด</h3>
+    <div class="qbox" id="cardQ">—</div>
+    <div id="cardAns"></div>
+    <button id="btnCardHide" class="b-red" type="button" style="margin-top:14px">🙈 ปิด & ส่งต่อ</button>
+  </div>
+</section>
+
+<section id="sc-board" class="screen">
+  <div class="card">
+    <p class="tag" id="boardTag">—</p>
+    <div class="res center" style="margin:8px 0">
+      <div class="small">คนตั้งคำถามรอบนี้</div>
+      <div class="big" id="boardQName" style="color:var(--gold)">—</div>
+      <div class="small">อ่านคำถามให้ทุกคนฟัง แล้วซักถามหา “ปลาสด”</div>
+    </div>
+    <h3 id="boardCat">หมวด</h3>
+    <div class="qbox" id="boardQ">—</div>
+    <div id="boardRoleWrap"></div>
+    <div id="boardAnsWrap"></div>
+  </div>
+  <div class="card">
+    <p class="small" id="boardHint">—</p>
+    <button id="btnGoHunt" class="b-gold" type="button">🔪 กำจัดปลาเน่า ล่าปลาสด</button>
+  </div>
+</section>
+
+<section id="sc-hunt" class="screen">
+  <div class="card">
+    <p class="tag center">🔪 กำจัดปลาเน่า ล่าปลาสด</p>
+    <div class="res center">
+      <div class="small">ผู้ล่า</div>
+      <div class="big" id="huntQName" style="color:var(--gold)">—</div>
+      <div class="small" id="huntState">—</div>
+    </div>
+    <div class="res center" style="display:flex;gap:10px;justify-content:center">
+      <div style="flex:1"><div class="small">คะแนนสะสมในตานี้</div><div class="big" id="huntPending">0</div></div>
+      <div style="flex:1"><div class="small">เหลือให้เปิด</div><div class="big" id="huntLeft">0</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>เลือกคนที่คิดว่าเป็น “ปลาเน่า” 🐠</h3>
+    <div class="huntGrid" id="huntGrid"></div>
+  </div>
+  <button id="btnStop" class="b-red" type="button">✋ หยุด & เก็บคะแนน</button>
+  <p class="small center" style="margin-top:8px">หยุดตอนนี้ = ปลาทุกตัวที่ยังไม่ถูกเปิด (ทั้งสดและเน่า) ได้ +2 คะแนน</p>
+</section>
+
+<section id="sc-rend" class="screen">
+  <h1 style="font-size:26px">สรุปตาที่ <span id="reTurn">1</span></h1>
+  <div class="card">
+    <h3>❓ คำถาม</h3>
+    <div class="qbox" id="reQ">—</div>
+    <div class="abox"><div class="small">คำตอบที่แท้จริง</div><div class="v" id="reA">—</div></div>
+    <div class="srcline" id="reSrc">—</div>
+  </div>
+  <div class="card">
+    <div class="res center">
+      <div style="font-size:56px" id="reEmo">🐟</div>
+      <div class="small">ปลาสดตัวจริงคือ</div>
+      <div class="big" id="reFresh" style="color:var(--aqua)">—</div>
+      <div class="big" id="reVerdict" style="margin-top:8px">—</div>
+    </div>
+    <h3 style="margin-top:12px">🔎 ลำดับที่เปิด</h3>
+    <ul class="list" id="reSeq"></ul>
+    <h3 style="margin-top:12px">➕ คะแนนที่ได้ตานี้</h3>
+    <ul class="list" id="reDelta"></ul>
+  </div>
+  <button id="btnNextTurn" class="b-gold" type="button">▶️ ตาต่อไป</button>
+  <p class="small center" id="reWait" style="display:none;margin-top:8px">⏳ รอเจ้าของห้องกดต่อ...</p>
+</section>
+
+<section id="sc-end" class="screen">
+  <h1 style="font-size:30px">🏆 จบเกม!</h1>
+  <div class="card"><ul class="list" id="endList"></ul></div>
+  <div class="row">
+    <button id="btnAgain" class="b-gold" type="button">🔁 เล่นอีกครั้ง</button>
+    <button id="btnHome2" class="b-ghost" type="button">🏠 หน้าแรก</button>
+  </div>
+</section>
+
+<section id="sc-empty" class="screen">
+  <div class="card center">
+    <div style="font-size:70px">🎣</div>
+    <h2>คำถามหมดคลังแล้ว!</h2>
+    <p>เล่นครบทุกคำถาม (<span id="emptyTotal">0</span> ข้อ) แล้ว 👏</p>
+    <button id="btnEmptyReset" class="b-gold" type="button">♻️ โหลดชุดคำถามใหม่</button>
+    <button id="btnEmptyHome" class="b-ghost" type="button" style="margin-top:10px">🏠 หน้าแรก</button>
+  </div>
+</section>
+</main>
+
+<div id="helpModal" class="modal"><div class="inner"><div class="card">
+  <h2>📖 กติกา SOUND FISHY</h2>
+  <p><b>ทุกตา</b> มี <b>คนตั้งคำถาม 1 คน</b> (วนครบทุกคนเท่า ๆ กัน) — คนตั้งคำถาม <b>ไม่เห็นคำตอบ</b></p>
+  <p>ในบรรดาผู้เล่นที่เหลือ มี <b>ปลาสด 🐟 เพียง 1 คน</b> ที่เห็นคำตอบจริง ที่เหลือเป็น <b>ปลาเน่า 🐠</b></p>
+  <p>🐠 ปลาเน่า: ตอบให้คนถามเชื่อว่า “ฉันคือปลาสด”<br>🐟 ปลาสด: ตอบให้คนถามเชื่อว่า “ฉันคือปลาเน่า”</p>
+  <h3>🔪 ช่วงกำจัดปลาเน่า</h3>
+  <p>คนถามเปิดป้ายชื่อทีละคน โดยต้องเปิดเจอ <b>ปลาเน่าเท่านั้น</b><br>
+    • เปิดเจอปลาเน่า → คนถาม <b>+1</b> แล้วเลือกต่อได้<br>
+    • เปิดเจอปลาสดก่อนคนสุดท้าย → คนถาม <b>0 คะแนนทั้งตา</b><br>
+    • เปิดจนเหลือคนสุดท้ายและเป็นปลาสดจริง → คนถามได้ <b>+2</b> เพิ่ม<br>
+    • กด <b>หยุด</b> เมื่อไรก็ได้ → เก็บคะแนนที่สะสม</p>
+  <h3>🧮 คะแนนของปลา (ให้เจ้าของปลาเสมอ)</h3>
+  <p>• ปลา <b>ที่ไม่ถูกเปิด</b> จนจบตา ได้ <b>+2</b> เสมอ — ทั้งปลาสด (รอด) และปลาเน่า (ลวงสำเร็จ)<br>
+    • <b>ปลาสดที่ถูกเปิดก่อนกำจัดปลาเน่าครบ</b> → เจ้าของปลาสดได้ <b>+2</b> (คนที่เปิดไม่ได้คะแนนนี้)<br>
+    • ปลาเน่าที่ถูกเปิด → 0 คะแนน<br>
+    • ปลาสดที่ถูกชี้เป็นคนสุดท้ายอย่างถูกต้อง → 0 คะแนน (คนถามได้ +2 แทน)</p>
+  <h3>🌐 โหมดออนไลน์</h3>
+  <p>เครื่องโฮสต์รันเอนจิ้นทั้งหมด • แต่ละเครื่องเห็นข้อมูลของตัวเองเท่านั้น • หลุดแล้วกลับเข้าด้วยรหัส+ชื่อเดิมได้</p>
+  <button id="btnHelpClose" class="b-gold" type="button">เข้าใจแล้ว!</button>
+</div></div></div>
+
+<div id="avaModal" class="modal"><div class="inner"><div class="card">
+  <h2>เลือกตัวละคร</h2>
+  <div class="egrid" id="avaGrid2"></div>
+  <button id="btnAvaClose" class="b-ghost" type="button" style="margin-top:12px">ปิด</button>
+</div></div></div>
+
+<div id="toast" class="toast"></div>
+<div id="errorPanel"><b>⚠️ Runtime Error</b><div id="errBody"></div><button id="errClose" class="b-ghost" type="button">ปิด</button></div>
+
+<script>
+(function(){
+"use strict";
+/* ============ error panel ============ */
+var errPanel=document.getElementById('errorPanel'),errBody=document.getElementById('errBody');
+function showError(m){try{errPanel.style.display='block';var p=document.createElement('pre');p.textContent=m;errBody.appendChild(p);}catch(e){}}
+window.addEventListener('error',function(ev){showError((ev.message||'error')+'\n@'+(ev.lineno||'?')+':'+(ev.colno||'?'));});
+window.addEventListener('unhandledrejection',function(ev){showError('Promise: '+(ev.reason&&ev.reason.message?ev.reason.message:String(ev.reason)));});
+document.getElementById('errClose').addEventListener('click',function(){errPanel.style.display='none';});
+function guard(f){return function(){try{return f.apply(this,arguments);}catch(e){showError((e&&e.message?e.message:String(e))+'\n'+(e&&e.stack?e.stack:''));}};}
+
+/* ============ helpers ============ */
+function $(id){return document.getElementById(id);}
+function el(t,c,x){var n=document.createElement(t);if(c)n.className=c;if(x!==undefined&&x!==null)n.textContent=x;return n;}
+function clear(n){while(n.firstChild)n.removeChild(n.firstChild);}
+function show(id){var L=document.querySelectorAll('.screen');for(var i=0;i<L.length;i++)L[i].classList.toggle('active',L[i].id===id);window.scrollTo(0,0);}
+function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
+var toastT=null;
+function toast(m){var t=$('toast');t.textContent=m;t.classList.add('on');if(toastT)clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('on');},2400);}
+
+/* ============================================================
+   QUESTION DATABASE v3 — TRIVIA / FUN FACT / STATISTICS
+   format: [question, answer, source, year]
+   ============================================================ */
+var QDB=[
+{c:"สัตว์สุดแปลก",e:"🦈",items:[
+["สัตว์มีกระดูกสันหลังชนิดใดมีอายุยืนที่สุดเท่าที่มีการยืนยันทางวิทยาศาสตร์ (อาจถึง 400 ปี)?","ฉลามกรีนแลนด์","วารสาร Science","2016"],
+["สัตว์ชนิดใดมีดวงตาใหญ่ที่สุดในอาณาจักรสัตว์ เส้นผ่านศูนย์กลางราว 27 เซนติเมตร?","หมึกคอลอสซอล","พิพิธภัณฑ์ Te Papa นิวซีแลนด์","2008"],
+["สัตว์ชนิดใดมีหัวใจ 3 ดวงและมีเลือดสีน้ำเงิน?","ปลาหมึกยักษ์ (ออกโตปัส)","Smithsonian Ocean",""],
+["สัตว์เลี้ยงลูกด้วยนมชนิดใดนอนน้อยที่สุดในธรรมชาติ เฉลี่ยราว 2 ชั่วโมงต่อวัน?","ช้างแอฟริกา","PLOS ONE","2017"],
+["นอกจากมนุษย์ สัตว์ชนิดใดที่ติดเชื้อโรคเรื้อนได้ตามธรรมชาติ?","อาร์มาดิลโล","CDC",""],
+["ตามข้อมูลองค์การอนามัยโลก สัตว์ชนิดใดทำให้มนุษย์เสียชีวิตมากที่สุดต่อปี?","ยุง","WHO",""],
+["สัตว์บกชนิดใดมีความดันโลหิตสูงที่สุดในบรรดาสัตว์เลี้ยงลูกด้วยนม?","ยีราฟ","Journal of Experimental Biology",""],
+["สัตว์ชนิดใดมีหัวใจหนักที่สุดในโลก หนักประมาณ 180 กิโลกรัม?","วาฬสีน้ำเงิน","Royal Ontario Museum","2015"],
+["สัตว์ทะเลชนิดใดต่อยเร็วจนเกิดฟองอากาศร้อนใต้น้ำ (cavitation bubble)?","กั้งตั๊กแตน","Nature",""],
+["สัตว์ชนิดใดทำเสียงดังที่สุดในโลก วัดได้ถึงราว 230 เดซิเบลใต้น้ำ?","วาฬสเปิร์ม","Acoustical Society of America",""],
+["สัตว์ชนิดใดอพยพเป็นระยะทางไกลที่สุดในโลกในแต่ละปี?","นกนางนวลแกลบอาร์กติก","PNAS","2010"],
+["สัตว์ชนิดใดทำความเร็วสูงสุดในอาณาจักรสัตว์ ราว 389 กิโลเมตรต่อชั่วโมงขณะดิ่งลง?","เหยี่ยวเพเรกริน","National Geographic",""],
+["ใต้ขนสีขาวของหมีขั้วโลก ผิวหนังจริง ๆ มีสีอะไร?","สีดำ","Polar Bears International",""],
+["เพศของลูกเต่าทะเลถูกกำหนดด้วยปัจจัยใดระหว่างการฟักไข่?","อุณหภูมิของทราย","NOAA",""],
+["สัตว์ชนิดใดมีฟันเล็ก ๆ บนลิ้น (radula) มากถึงหลักหมื่นซี่?","หอยทาก","Natural History Museum ลอนดอน",""],
+["สัตว์ชนิดใดสามารถย้อนกลับสู่ระยะตัวอ่อนได้จนถูกเรียกว่า “อมตะ”?","แมงกะพรุน Turritopsis dohrnii","AMNH",""],
+["ก๊าซมีเทนจากวัวส่วนใหญ่ถูกปล่อยออกทางช่องทางใด?","การเรอ","UC Davis CLEAR Center",""],
+["สัตว์ชนิดใดมีแรงกัดสูงที่สุดเท่าที่เคยวัดได้ในสัตว์ที่ยังมีชีวิตอยู่?","จระเข้น้ำเค็ค","National Geographic","2012"]
+]},
+{c:"ภูมิศาสตร์สุดแปลก",e:"🌍",items:[
+["ประเทศใดมีจำนวนเกาะมากที่สุดในโลก ราว 267,000 เกาะ?","สวีเดน","Statistics Sweden",""],
+["ประเทศใดมีเขตเวลามากที่สุดในโลก รวม 12 เขตเวลา?","ฝรั่งเศส","CIA World Factbook",""],
+["เมื่อนิยามทะเลทรายด้วยปริมาณน้ำฝน พื้นที่ใดคือทะเลทรายที่ใหญ่ที่สุดในโลก?","ทวีปแอนตาร์กติกา","NASA Earth Observatory",""],
+["อุณหภูมิอากาศสูงสุดที่เคยบันทึกอย่างเป็นทางการบนโลก 56.7°C เกิดขึ้นที่ใด (ปี 1913)?","เดธแวลลีย์ สหรัฐอเมริกา","WMO","1913"],
+["อุณหภูมิต่ำสุดที่เคยบันทึกบนพื้นผิวโลก −89.2°C เกิดที่สถานีใด?","สถานีวอสตอค แอนตาร์กติกา","WMO","1983"],
+["เมืองหลวงใดตั้งอยู่สูงเหนือระดับน้ำทะเลมากที่สุดในโลก?","ลาปาซ โบลิเวีย","Britannica",""],
+["ประเทศใดมีพรมแดนทางบกติดกับประเทศอื่นมากที่สุด 14 ประเทศ (เท่ากับรัสเซีย)?","จีน","CIA World Factbook",""],
+["ประเทศเดียวในโลกที่มีดินแดนอยู่ครบทั้งสี่ซีกโลกคือประเทศใด?","คิริบาส","Britannica",""],
+["ทะเลสาบใดลึกที่สุดในโลก ลึกกว่า 1,600 เมตร?","ทะเลสาบไบคาล","UNESCO",""],
+["สถานที่ใดได้ชื่อว่าแห้งแล้งที่สุดในโลก บางจุดไม่มีฝนตกหลายร้อยปี?","ทะเลทรายอาตากามา","NASA",""],
+["น้ำตกที่สูงที่สุดในโลก สูง 979 เมตร อยู่ในประเทศใด?","เวเนซุเอลา","Guinness World Records",""],
+["ประเทศใดมีภูเขาไฟที่ยังคุกรุ่นมากที่สุดในโลก?","อินโดนีเซีย","Smithsonian Global Volcanism Program",""],
+["จุดที่ลึกที่สุดของมหาสมุทรโลกมีชื่อเรียกว่าอะไร?","ชาลเลนเจอร์ดีป","NOAA",""],
+["ประเทศใดมีความหนาแน่นประชากรสูงที่สุดในโลก?","โมนาโก","UN Population Division",""],
+["ประเทศใดมีสัดส่วนพื้นที่ป่าต่อพื้นที่ทั้งประเทศสูงที่สุดในโลก ราว 97%?","ซูรินาม","FAO",""],
+["เมืองใดมีจำนวนสถานีรถไฟใต้ดินมากที่สุดในโลก 472 สถานี?","นิวยอร์ก","MTA",""],
+["ทะเลใดในโลกที่ไม่มีชายฝั่งแม้แต่ด้านเดียว ถูกล้อมด้วยกระแสน้ำทั้งหมด?","ทะเลซาร์กัสโซ","NOAA",""],
+["ตามข้อมูลที่บันทึกไว้ เกาะใดมีขนาดใหญ่ที่สุดในโลก?","กรีนแลนด์","Britannica",""]
+]},
+{c:"ประวัติศาสตร์สุดแปลก",e:"🏛️",items:[
+["สงครามที่สั้นที่สุดในประวัติศาสตร์กินเวลาราว 38 นาที เป็นสงครามระหว่างอังกฤษกับดินแดนใด?","แซนซิบาร์","Guinness World Records","1896"],
+["คลีโอพัตรามีชีวิตอยู่ใกล้กับเหตุการณ์ใดมากกว่า ระหว่างการสร้างมหาพีระมิดกีซา กับการลงจอดบนดวงจันทร์?","การลงจอดบนดวงจันทร์","Smithsonian Magazine",""],
+["ปี 1932 กองทัพออสเตรเลียเปิดปฏิบัติการทางทหารกับสัตว์ชนิดใดจนถูกเรียกว่า “สงคราม”?","นกอีมู","Australian War Memorial","1932"],
+["ปี 1919 ที่เมืองบอสตัน ถังขนาดยักษ์แตกจนของเหลวชนิดใดท่วมถนนและมีผู้เสียชีวิต 21 คน?","กากน้ำตาล","Boston Public Library","1919"],
+["ประเทศใดเป็นประเทศแรกที่ให้สิทธิเลือกตั้งแก่ผู้หญิงทั่วประเทศ?","นิวซีแลนด์","NZ History","1893"],
+["ประเทศใดเป็นชาติสุดท้ายในโลกที่ประกาศยกเลิกระบบทาสอย่างเป็นทางการ?","มอริเตเนีย","UN","1981"],
+["ฟองสบู่เก็งกำไรครั้งใหญ่ครั้งแรกของโลกในเนเธอร์แลนด์ศตวรรษที่ 17 เกิดจากสินค้าชนิดใด?","หัวทิวลิป","Rijksmuseum","1637"],
+["มหาวิทยาลัยออกซ์ฟอร์ดเริ่มมีการสอนก่อนการก่อตั้งอาณาจักรใดในทวีปอเมริกา?","อาณาจักรแอซเท็ก","University of Oxford",""],
+["อาชีพ “knocker-up” ในอังกฤษยุควิกตอเรียมีหน้าที่อะไร?","เคาะหน้าต่างปลุกคนไปทำงาน","BBC",""],
+["ชาวโรมันโบราณใช้ของเหลวชนิดใดเป็นทั้งน้ำยาบ้วนปากและน้ำยาซักผ้า?","ปัสสาวะ","Smithsonian Magazine",""],
+["ในศตวรรษที่ 19 ชาวยุโรปนิยมนำมัมมี่อียิปต์มาใช้ทำสิ่งใดนอกจากการจัดแสดง?","บดเป็นยา","Wellcome Collection",""],
+["เครื่องดื่มชนิดใดถูกใช้จ่ายเป็นค่าแรงให้คนงานสร้างพีระมิดในอียิปต์โบราณ?","เบียร์","AERA Giza Project",""],
+["อาชีพ “gong farmer” ในยุโรปยุคกลางมีหน้าที่อะไร?","ตักสิ่งปฏิกูลจากส้วม","Museum of London",""],
+["ราชวงศ์ที่ปกครองต่อเนื่องยาวนานที่สุดในโลกที่ยังคงอยู่จนปัจจุบัน เป็นราชวงศ์ของประเทศใด?","ญี่ปุ่น","Britannica",""],
+["การประกวด Miss Universe ครั้งแรกของโลกจัดขึ้นในปีใด?","ปี 1952","Miss Universe Organization","1952"],
+["ในสงครามโลกครั้งที่ 2 สัตว์ชนิดใดได้รับเหรียญกล้าหาญ Dickin Medal มากที่สุด?","นกพิราบ","PDSA",""],
+["กำแพงเบอร์ลินถูกเปิดและเริ่มทุบทำลายในปีใด?","ปี 1989","Deutsches Historisches Museum","1989"]
+]},
+{c:"วิทยาศาสตร์ & อวกาศ",e:"🔬",items:[
+["ดาวเคราะห์ดวงใดร้อนที่สุดในระบบสุริยะ แม้จะไม่ได้อยู่ใกล้ดวงอาทิตย์ที่สุด?","ดาวศุกร์","NASA",""],
+["ดาวเคราะห์ดวงใดหมุนรอบตัวเองโดยเอียงเกือบ 98 องศา เหมือนกลิ้งไปตามวงโคจร?","ดาวยูเรนัส","NASA",""],
+["วัตถุที่มนุษย์สร้างขึ้นชิ้นใดอยู่ไกลจากโลกมากที่สุดในปัจจุบัน?","ยานวอยเอเจอร์ 1","NASA JPL",""],
+["ตามข้อมูลปี 2023 ดาวเคราะห์ดวงใดมีดวงจันทร์บริวารที่ได้รับการยืนยันมากที่สุด?","ดาวเสาร์","IAU / NASA","2023"],
+["ธาตุใดพบมากที่สุดในเปลือกโลกเมื่อคิดตามมวล?","ออกซิเจน","USGS",""],
+["โลหะชนิดใดมีจุดหลอมเหลวสูงที่สุด ราว 3,422 องศาเซลเซียส?","ทังสเตน","Royal Society of Chemistry",""],
+["กระดูกชิ้นใดเล็กที่สุดในร่างกายมนุษย์?","กระดูกโกลน (stapes)","NIH",""],
+["อวัยวะใดมีขนาดใหญ่ที่สุดในร่างกายมนุษย์?","ผิวหนัง","NIH",""],
+["เสียงที่ดังที่สุดที่เคยมีการบันทึกในประวัติศาสตร์เกิดจากเหตุการณ์ใด?","ภูเขาไฟกรากะตัวระเบิด","Smithsonian","1883"],
+["น้ำบนโลกเป็นน้ำจืดประมาณกี่เปอร์เซ็นต์ของน้ำทั้งหมด?","ประมาณ 2.5%","USGS",""],
+["ความยาวรวมของหลอดเลือดในร่างกายผู้ใหญ่หนึ่งคนประมาณเท่าใด?","ประมาณ 100,000 กิโลเมตร","Cleveland Clinic",""],
+["ทารกแรกเกิดมีกระดูกประมาณกี่ชิ้น ขณะที่ผู้ใหญ่มี 206 ชิ้น?","ประมาณ 300 ชิ้น","NIH",""],
+["แสงจากดวงอาทิตย์ใช้เวลาเดินทางมาถึงโลกประมาณกี่นาที?","ประมาณ 8 นาที","NASA",""],
+["นักบินอวกาศที่อยู่บนสถานีอวกาศนาน ๆ จะตัวสูงขึ้นชั่วคราวประมาณกี่เซนติเมตร?","ประมาณ 5 เซนติเมตร","NASA",""],
+["รอยเท้าของนักบินอวกาศบนดวงจันทร์จะคงอยู่ได้นานเท่าใดเพราะไม่มีลมและน้ำ?","หลายล้านปี","NASA",""],
+["หัวใจมนุษย์เต้นเฉลี่ยประมาณกี่ครั้งต่อวัน?","ประมาณ 100,000 ครั้ง","American Heart Association",""],
+["ดาวเคราะห์ดวงใดมีความหนาแน่นเฉลี่ยต่ำกว่าน้ำ จนในทางทฤษฎีสามารถลอยน้ำได้?","ดาวเสาร์","NASA",""]
+]},
+{c:"อาหาร & เครื่องดื่ม",e:"🍜",items:[
+["วาซาบิที่เสิร์ฟในร้านซูชิทั่วไปนอกญี่ปุ่นส่วนใหญ่ทำมาจากพืชชนิดใด?","ฮอร์สแรดิช","BBC Food",""],
+["เครื่องเทศชนิดใดแพงที่สุดในโลกเมื่อคิดตามน้ำหนัก?","หญ้าฝรั่น (แซฟฟรอน)","Guinness World Records",""],
+["ประเทศใดเป็นผู้ผลิตวานิลลารายใหญ่ที่สุดของโลก?","มาดากัสการ์","FAO",""],
+["ผลไม้ญี่ปุ่นชนิดใดเคยถูกประมูลได้ราคาสูงถึง 5 ล้านเยนต่อคู่ในปี 2019?","เมล่อนยูบาริคิง","Japan Times","2019"],
+["ในทางพฤกษศาสตร์ กล้วยถูกจัดเป็นผลไม้ประเภทใด?","เบอร์รี่","Botanical Society of America",""],
+["อาหารชนิดใดที่พบในสุสานอียิปต์อายุกว่า 3,000 ปี แล้วยังไม่เน่าเสีย?","น้ำผึ้ง","Smithsonian Magazine",""],
+["พริกที่เผ็ดที่สุดในโลกตาม Guinness World Records ปี 2023 มีชื่อว่าอะไร?","Pepper X","Guinness World Records","2023"],
+["ประเทศใดบริโภคบะหมี่กึ่งสำเร็จรูปต่อหัวมากที่สุดในโลก?","เวียดนาม","World Instant Noodles Association","2022"],
+["ประเทศใดบริโภคช็อกโกแลตต่อหัวมากที่สุดในโลก?","สวิตเซอร์แลนด์","Chocosuisse",""],
+["ประเทศใดบริโภคกาแฟต่อหัวมากที่สุดในโลก?","ฟินแลนด์","International Coffee Organization",""],
+["เครื่องดื่มชนิดใดที่คนทั้งโลกดื่มมากเป็นอันดับสองรองจากน้ำเปล่า?","ชา","FAO",""],
+["คำว่า “เคตชัป” มีรากศัพท์มาจากซอสชนิดใดในเอเชีย?","ซอสปลาหมัก","Oxford English Dictionary",""],
+["แครอทที่มนุษย์เพาะปลูกในยุคแรกส่วนใหญ่มีสีอะไร?","สีม่วง","World Carrot Museum",""],
+["ถั่วลิสงจัดอยู่ในพืชกลุ่มใด ซึ่งไม่ใช่ถั่วเปลือกแข็ง?","พืชตระกูลถั่ว (legume)","USDA",""],
+["ประเทศใดเป็นผู้ส่งออกดอกไม้สดรายใหญ่ที่สุดของโลก?","เนเธอร์แลนด์","Royal FloraHolland",""],
+["พืชอาหารชนิดใดเป็นชนิดแรกที่ถูกปลูกสำเร็จในอวกาศเมื่อปี 1995?","มันฝรั่ง","NASA","1995"],
+["ประเทศใดมีจำนวนตู้ขายสินค้าอัตโนมัติต่อประชากรมากที่สุดในโลก?","ญี่ปุ่น","Japan Vending Machine Manufacturers Association",""]
+]},
+{c:"สิ่งประดิษฐ์ & ที่มาของสิ่งของ",e:"💡",items:[
+["เตาไมโครเวฟถูกค้นพบโดยบังเอิญจากสิ่งใดละลายอยู่ในกระเป๋าของนักวิจัย?","ช็อกโกแลตแท่ง","Raytheon","1945"],
+["เวลโคร (ตีนตุ๊กแก) ได้แรงบันดาลใจจากสิ่งใดในธรรมชาติ?","หนามของต้นเบอร์ด็อก","Velcro Companies","1941"],
+["กระดาษโน้ต Post-it เกิดจากความล้มเหลวในการพัฒนาอะไร?","กาวที่เหนียวไม่พอ","3M","1968"],
+["พลาสติกกันกระแทก (bubble wrap) เดิมถูกคิดค้นขึ้นเพื่อใช้เป็นอะไร?","วอลเปเปอร์ติดผนัง","Sealed Air","1957"],
+["แป้งโดว์เล่นของเด็ก (Play-Doh) เดิมถูกผลิตขายเป็นสินค้าอะไร?","น้ำยาทำความสะอาดวอลเปเปอร์","Hasbro",""],
+["ชื่อ “Google” มาจากการสะกดผิดของคำทางคณิตศาสตร์คำใด?","googol","Stanford University",""],
+["เที่ยวบินแรกของพี่น้องตระกูลไรต์ในปี 1903 อยู่ในอากาศนานประมาณกี่วินาที?","ประมาณ 12 วินาที","Smithsonian NASM","1903"],
+["เว็บไซต์แรกของโลกที่ยังออนไลน์อยู่จนทุกวันนี้เป็นของหน่วยงานใด?","CERN","CERN","1991"],
+["วิดีโอแรกที่ถูกอัปโหลดขึ้น YouTube ในปี 2005 มีชื่อว่าอะไร?","Me at the zoo","YouTube","2005"],
+["อีโมจิชุดแรกของโลกถูกออกแบบขึ้นในประเทศใดเมื่อปี 1999?","ญี่ปุ่น","MoMA","1999"],
+["หมุดโลหะ (rivet) ถูกเพิ่มเข้ากับกางเกงยีนส์ในปี 1873 เพื่อแก้ปัญหาใด?","กระเป๋ากางเกงขาด","Levi Strauss & Co.","1873"],
+["ดินสอไม้ 1 แท่งสามารถขีดเส้นได้ยาวรวมประมาณเท่าใด?","ประมาณ 56 กิโลเมตร","Faber-Castell",""],
+["แป้นพิมพ์ QWERTY ถูกออกแบบขึ้นเพื่อแก้ปัญหาใดของเครื่องพิมพ์ดีดยุคแรก?","ก้านตัวอักษรติดขัดกัน","Smithsonian",""],
+["ลิฟต์โดยสารได้รับความนิยมหลังการสาธิตสิ่งประดิษฐ์ใดของ Elisha Otis ในปี 1854?","เบรกนิรภัยกันลิฟต์ตก","Otis Elevator","1854"],
+["โทรศัพท์มือถือเครื่องแรกที่วางขายเชิงพาณิชย์ในปี 1983 เป็นของแบรนด์ใด?","โมโตโรล่า","Motorola","1983"],
+["กระป๋องบรรจุอาหารถูกประดิษฐ์ก่อนสิ่งใดถึงเกือบ 50 ปี?","ที่เปิดกระป๋อง","Science Museum ลอนดอน",""],
+["เครื่องหมาย @ ถูกใช้ในวงการใดมาก่อนที่จะถูกนำมาใช้ในอีเมล?","การค้า (ระบุราคาต่อหน่วย)","Oxford English Dictionary",""]
+]},
+{c:"สถิติโลก Guinness",e:"🏆",items:[
+["บุคคลที่สูงที่สุดในประวัติศาสตร์ที่มีการบันทึก สูง 2.72 เมตร เป็นชาวประเทศใด?","สหรัฐอเมริกา","Guinness World Records",""],
+["ผู้ที่มีอายุยืนที่สุดในประวัติศาสตร์ที่ได้รับการรับรอง มีอายุเท่าใด?","122 ปี","Guinness World Records","1997"],
+["ชายผู้ถูกฟ้าผ่ามากที่สุดในโลกและรอดชีวิต ถูกฟ้าผ่ากี่ครั้ง?","7 ครั้ง","Guinness World Records",""],
+["อาการสะอึกที่ยาวนานที่สุดที่เคยมีการบันทึกไว้ กินเวลานานเท่าใด?","68 ปี","Guinness World Records",""],
+["แมวที่อายุยืนที่สุดในโลกที่มีการบันทึก มีอายุกี่ปี?","38 ปี","Guinness World Records","2005"],
+["สถิติการอดนอนต่อเนื่องที่ยาวนานที่สุดที่บันทึกไว้เมื่อปี 1964 คือประมาณกี่วัน?","11 วัน","Guinness World Records","1964"],
+["สุนัขพันธุ์ใดครองสถิติ “สุนัขที่สูงที่สุดในโลก” หลายสมัย?","เกรทเดน","Guinness World Records",""],
+["วิดีโอเกมใดมียอดขายสูงที่สุดตลอดกาล?","Minecraft","Guinness World Records","2023"],
+["หนังสือเล่มใดถูกแปลเป็นภาษาต่าง ๆ มากที่สุดในโลก?","คัมภีร์ไบเบิล","Guinness World Records",""],
+["เพลงใดถูกนำไปคัฟเวอร์มากที่สุดในโลก?","Yesterday ของ The Beatles","Guinness World Records",""],
+["ภาพยนตร์เรื่องใดได้รับรางวัลออสการ์สาขาภาพยนตร์ยอดเยี่ยมเป็นเรื่องแรก?","Wings","Academy Awards","1929"],
+["เทศกาลทางศาสนาใดมีผู้เข้าร่วมมากที่สุดในโลก?","กุมภเมลา ประเทศอินเดีย","UNESCO",""],
+["ชื่อแรก (first name) ใดที่มีคนใช้มากที่สุดในโลก?","มูฮัมหมัด","BBC",""],
+["นามสกุลใดที่มีคนใช้มากที่สุดในโลก?","หวัง (Wang)","Chinese Ministry of Public Security",""],
+["นักกีฬาที่ได้เหรียญทองโอลิมปิกมากที่สุดตลอดกาล ได้ไปกี่เหรียญทอง?","23 เหรียญ","IOC","2016"],
+["เที่ยวบินพาณิชย์ที่สั้นที่สุดในโลกในสกอตแลนด์ ใช้เวลาบินประมาณเท่าใด?","ประมาณ 90 วินาที","Guinness World Records",""],
+["ลิฟต์โดยสารที่เร็วที่สุดในโลกติดตั้งอยู่ในประเทศใด?","จีน","Guinness World Records","2017"]
+]},
+{c:"สถิติ & ผลสำรวจ",e:"📊",items:[
+["จากรายงาน DataReportal ปี 2024 คนทั่วโลกใช้เวลากับโซเชียลมีเดียเฉลี่ยวันละประมาณเท่าใด?","ประมาณ 2 ชั่วโมงครึ่ง","DataReportal","2024"],
+["จากข้อมูล OECD ประเทศใดมีเวลานอนเฉลี่ยต่อคืนน้อยที่สุดในกลุ่มประเทศสมาชิก?","ญี่ปุ่น","OECD",""],
+["ตาม CIA World Factbook ประเทศใดมีอายุคาดเฉลี่ยของประชากรสูงที่สุดในโลก?","โมนาโก","CIA World Factbook",""],
+["มนุษย์กะพริบตาเฉลี่ยประมาณกี่ครั้งต่อนาที?","ประมาณ 15–20 ครั้ง","Harvard Health",""],
+["โดยเฉลี่ยคนเราสูญเสียเส้นผมวันละประมาณกี่เส้น?","ประมาณ 50–100 เส้น","American Academy of Dermatology",""],
+["ตลอดช่วงชีวิต มนุษย์ใช้เวลาไปกับการนอนคิดเป็นสัดส่วนประมาณเท่าใด?","ประมาณ 1 ใน 3 ของชีวิต","NIH",""],
+["จากรายงานของ Axalta สีรถยนต์ใดได้รับความนิยมสูงสุดทั่วโลก?","สีขาว","Axalta Global Color Popularity Report","2023"],
+["ภาษาใดมีผู้พูดเป็นภาษาแม่มากที่สุดในโลก?","ภาษาจีนกลาง","Ethnologue","2023"],
+["ประเทศใดมีจำนวนแมวเลี้ยงมากที่สุดในโลก?","สหรัฐอเมริกา","American Pet Products Association",""],
+["เว็บไซต์ใดมีผู้เข้าชมมากที่สุดในโลกต่อเนื่องหลายปี?","Google","Similarweb","2024"],
+["จากการวิเคราะห์ข้อมูลอุบัติเหตุการบิน ที่นั่งบริเวณใดมีอัตรารอดชีวิตสูงกว่าเล็กน้อย?","ที่นั่งด้านท้ายเครื่อง","TIME (วิเคราะห์ข้อมูล FAA)","2015"],
+["จากสถิติการลางาน วันใดของสัปดาห์ที่คนโทรลาป่วยมากที่สุด?","วันจันทร์","CIPD Absence Survey",""],
+["ประเทศใดบริโภคชาต่อหัวมากที่สุดในโลก?","ตุรกี","Euromonitor",""],
+["ประเทศใดมีนักท่องเที่ยวต่างชาติมาเยือนมากที่สุดในโลก?","ฝรั่งเศส","UN Tourism (UNWTO)","2023"],
+["จากผลสำรวจความกลัวของประชาชน ความกลัวอันดับต้น ๆ ที่พบบ่อยที่สุดคือการกลัวสิ่งใด?","การพูดต่อหน้าสาธารณชน","Chapman University Survey of American Fears",""],
+["เลือดกรุ๊ปใดพบมากที่สุดในประชากรโลก?","กรุ๊ป O","American Red Cross",""],
+["สนามบินใดมีผู้โดยสารมากที่สุดในโลกต่อเนื่องหลายปี?","สนามบินแอตแลนตา","Airports Council International","2023"]
+]},
+{c:"วัฒนธรรม & ประเพณีแปลก",e:"🎭",items:[
+["ในสเปนมีประเพณี “เอลโกลาโช” ที่ผู้ชายแต่งเป็นปีศาจกระโดดข้ามสิ่งใด?","ทารกที่นอนบนฟูก","BBC Travel",""],
+["เนินเขาแห่งใดในอังกฤษจัดการแข่งขันวิ่งไล่ชีสที่กลิ้งลงจากเนินทุกปี?","คูเปอร์สฮิลล์","BBC",""],
+["ประเทศใดออกกฎหมายห้ามนำเข้าและจำหน่ายหมากฝรั่งตั้งแต่ปี 1992?","สิงคโปร์","Singapore Statutes","1992"],
+["ประเทศใดจัดการแข่งขันชิงแชมป์โลกประเภท “แบกภรรยา” เป็นประจำทุกปี?","ฟินแลนด์","Wife Carrying World Championships",""],
+["ประเพณี “นากิซุโม” ของญี่ปุ่นคือการแข่งขันอะไรของทารก?","การร้องไห้","Japan National Tourism Organization",""],
+["ประเทศใดยกเลิกระบบนับอายุแบบดั้งเดิมของตนเองอย่างเป็นทางการในเดือนมิถุนายน 2023?","เกาหลีใต้","Korea Ministry of Government Legislation","2023"],
+["สวิตเซอร์แลนด์มีกฎหมายห้ามเลี้ยงสัตว์ชนิดใดเพียงตัวเดียวเพราะถือว่าทารุณ?","หนูตะเภา","Swiss Animal Welfare Ordinance",""],
+["กองทัพนอร์เวย์แต่งตั้งสัตว์ชนิดใดให้มียศทหารอย่างเป็นทางการที่สวนสัตว์เอดินบะระ?","เพนกวิน","Norwegian King's Guard",""],
+["ประเทศใดใช้ดัชนี “ความสุขมวลรวมประชาชาติ” เป็นตัวชี้วัดการพัฒนาแทน GDP เพียงอย่างเดียว?","ภูฏาน","Centre for Bhutan Studies",""],
+["ในเกาหลีใต้ วันที่ 14 เมษายนถูกเรียกว่าวันอะไรสำหรับคนที่ยังโสด?","แบล็กเดย์","Korea Tourism Organization",""],
+["ในเดนมาร์ก คนที่ยังโสดเมื่ออายุครบ 25 ปี จะถูกเพื่อนทำอะไรตามธรรมเนียม?","โปรยผงอบเชยใส่","Denmark.dk",""],
+["ในโปแลนด์และยุโรปตะวันออก ธรรมเนียมวันจันทร์อีสเตอร์คือผู้ชายจะทำอะไรกับผู้หญิง?","สาดน้ำใส่","Polish Culture Institute",""],
+["วัดการ์นีมาตาในอินเดียให้ความเคารพและเลี้ยงดูสัตว์ชนิดใดนับหมื่นตัว?","หนู","National Geographic",""],
+["ชาวมองโกลดั้งเดิมนิยมดื่มเครื่องดื่มแอลกอฮอล์ที่หมักจากนมของสัตว์ชนิดใด?","ม้า","UNESCO",""],
+["อาชีพ “โอชิยะ” ตามสถานีรถไฟในญี่ปุ่นมีหน้าที่อะไร?","ดันผู้โดยสารเข้าไปในขบวนรถ","Japan Railways",""],
+["กีฬาพื้นบ้านของสกอตแลนด์ที่ต้องโยนท่อนซุงขนาดใหญ่ให้ตีลังกา เรียกว่าอะไร?","คาเบอร์ทอส","Scottish Highland Games Association",""],
+["ในสเปนมีธรรมเนียมกินองุ่น 12 ลูกอย่างรวดเร็วในช่วงเวลาใด?","เที่ยงคืนวันส่งท้ายปีเก่า","Spain.info",""]
+]},
+{c:"การเดินทาง & สถาปัตยกรรม",e:"🚄",items:[
+["สะพานที่ยาวที่สุดในโลก ความยาวกว่า 164 กิโลเมตร ตั้งอยู่ในประเทศใด?","จีน","Guinness World Records",""],
+["รถไฟเชิงพาณิชย์ที่วิ่งเร็วที่สุดในโลกให้บริการอยู่ในเมืองใด?","เซี่ยงไฮ้","Shanghai Maglev",""],
+["สนามบินที่มีพื้นที่ใหญ่ที่สุดในโลกตั้งอยู่ในประเทศใด?","ซาอุดีอาระเบีย","Guinness World Records",""],
+["ถนนสายที่ยาวที่สุดในโลกตาม Guinness มีชื่อว่าอะไร?","ทางหลวงแพนอเมริกัน","Guinness World Records",""],
+["สิ่งก่อสร้างใดเป็นสิ่งแรกของโลกที่สูงเกิน 300 เมตร?","หอไอเฟล","Société d'Exploitation de la Tour Eiffel","1889"],
+["ระบบรถไฟใต้ดินแห่งแรกของโลกเปิดให้บริการที่เมืองใด?","ลอนดอน","Transport for London","1863"],
+["เรือที่ผ่านคลองใดต้องถูกยกระดับขึ้นกว่า 26 เมตรด้วยระบบประตูน้ำ?","คลองปานามา","Panama Canal Authority",""],
+["บันไดเลื่อนกลางแจ้งที่ยาวที่สุดในโลกอยู่ที่ใด?","ฮ่องกง","Guinness World Records",""],
+["อาคารใดครองตำแหน่งอาคารสูงที่สุดในโลกยาวนานถึง 40 ปี ระหว่างปี 1931–1970?","ตึกเอ็มไพร์สเตต","CTBUH",""],
+["เรือสำราญที่ใหญ่ที่สุดในโลกซึ่งเริ่มให้บริการในปี 2024 มีชื่อว่าอะไร?","Icon of the Seas","Royal Caribbean","2024"],
+["สถานีรถไฟใต้ดินที่ลึกที่สุดในโลกอยู่ในประเทศใด?","ยูเครน","Guinness World Records",""],
+["เมืองใดมีระบบรถไฟใต้ดินที่มีผู้โดยสารมากที่สุดในโลก?","โตเกียว","UITP",""],
+["หอเอนเมืองปิซาเอียงเพราะสาเหตุใด?","ชั้นดินใต้ฐานอ่อนตัวไม่เท่ากัน","Opera della Primaziale Pisana",""],
+["ลิฟต์โดยสารเชิงพาณิชย์ตัวแรกของโลกถูกติดตั้งในเมืองใด?","นิวยอร์ก","Otis Elevator","1857"],
+["ตามคำยืนยันของนักบินอวกาศ กำแพงเมืองจีนสามารถมองเห็นจากอวกาศด้วยตาเปล่าได้หรือไม่?","มองไม่เห็น","NASA",""],
+["สนามบินใดได้ชื่อว่าอันตรายที่สุดในโลกเพราะรันเวย์สั้นและลาดเอียงบนภูเขา?","สนามบินลุกลา ประเทศเนปาล","History Channel",""],
+["ประเทศใดมีประชากรที่ขับรถชิดซ้ายมากที่สุดในโลก?","อินเดีย","World Standards",""]
+]},
+{c:"กีฬา & การแข่งขัน",e:"⚽",items:[
+["กีฬาใดเคยเป็นกีฬาโอลิมปิกระหว่างปี 1900–1920 ก่อนถูกถอดออก?","ชักเย่อ","IOC",""],
+["โอลิมปิกยุคแรกเคยมีการมอบเหรียญรางวัลในสาขาใดที่ไม่ใช่กีฬา?","ศิลปะ","Olympic Museum","1912"],
+["ลูกกอล์ฟมาตรฐานมีหลุมเล็ก ๆ บนผิวประมาณกี่หลุม?","ประมาณ 300–500 หลุม","USGA",""],
+["ประเทศใดชนะเลิศฟุตบอลโลกมากที่สุด?","บราซิล","FIFA",""],
+["เกมหมากรุกอาชีพที่ยาวนานที่สุดในประวัติศาสตร์จบลงที่กี่ตาเดิน?","269 ตา","FIDE","1989"],
+["กีฬาชนิดใดที่ถูกเล่นบนดวงจันทร์เป็นครั้งแรกโดยนักบินอวกาศ?","กอล์ฟ","NASA","1971"],
+["ในกีฬาโอลิมปิกโบราณของกรีซ นักกีฬาลงแข่งขันในสภาพใด?","เปลือยกาย","Britannica",""],
+["โอลิมปิกฤดูร้อนยุคใหม่ครั้งแรกในปี 1896 จัดขึ้นที่ประเทศใด?","กรีซ","IOC","1896"],
+["กีฬาประจำชาติฤดูร้อนของแคนาดาตามกฎหมายคือกีฬาใด?","ลาครอส","Parliament of Canada","1994"],
+["กีฬาชนิดใดมีผู้เล่นในสนามฝ่ายละ 15 คน?","รักบี้ยูเนียน","World Rugby",""],
+["การแข่งขันจักรยานตูร์ เดอ ฟรองซ์ มีระยะทางรวมต่อปีประมาณกี่กิโลเมตร?","ประมาณ 3,500 กิโลเมตร","ASO",""],
+["ในกีฬาซูโม่ นักกีฬาจะแพ้ทันทีเมื่อเกิดเหตุการณ์ใด?","ส่วนอื่นของร่างกายนอกจากฝ่าเท้าแตะพื้น","Japan Sumo Association",""],
+["ประเทศไทยได้เหรียญทองโอลิมปิกเหรียญแรกจากกีฬาชนิดใด?","มวยสากลสมัครเล่น","IOC","1996"],
+["สนามกีฬาที่จุผู้ชมได้มากที่สุดในโลกในปัจจุบันตั้งอยู่ในประเทศใด?","เกาหลีเหนือ","Guinness World Records",""],
+["ในการแข่งขันเบสบอล MLB หนึ่งนัด ลูกบอลถูกเปลี่ยนเฉลี่ยประมาณกี่ลูก?","ประมาณ 100 ลูก","MLB",""],
+["ระยะทางมาราธอน 42.195 กิโลเมตร ถูกกำหนดตายตัวจากการแข่งขันใด?","โอลิมปิกที่ลอนดอน","World Athletics","1908"]
+]},
+{c:"อาชีพแปลก & ร่างกายมนุษย์",e:"🧑‍🔧",items:[
+["โรงงานบุหรี่ในคิวบาเคยจ้างคนตำแหน่ง “lector” เพื่อทำอะไร?","อ่านหนังสือให้คนงานฟัง","UNESCO",""],
+["อาชีพ “นักดมกลิ่นรักแร้” ทำหน้าที่ทดสอบสินค้าประเภทใด?","ผลิตภัณฑ์ระงับกลิ่นกาย","BBC",""],
+["NASA เคยจ่ายเงินให้อาสาสมัครทำสิ่งใดต่อเนื่องนาน 60–70 วัน?","นอนอยู่บนเตียงตลอดเวลา","NASA Bed Rest Study",""],
+["อาชีพ “ผู้จัดคิวมืออาชีพ” มีหน้าที่อะไร?","ต่อแถวรอแทนลูกค้า","The Guardian",""],
+["กล้ามเนื้อใดของมนุษย์แข็งแรงที่สุดเมื่อเทียบกับน้ำหนักของตัวกล้ามเนื้อเอง?","กล้ามเนื้อกราม (masseter)","Guinness World Records",""],
+["เยื่อบุกระเพาะอาหารของมนุษย์ถูกสร้างขึ้นใหม่ทั้งหมดทุกกี่วันโดยประมาณ?","ทุก 3–4 วัน","NIH",""],
+["ร่างกายมนุษย์ผลิตน้ำลายเฉลี่ยวันละประมาณเท่าใด?","ประมาณ 1–1.5 ลิตร","NIH",""],
+["ลายนิ้วมือของสัตว์ชนิดใดคล้ายมนุษย์มากจนอาจทำให้สับสนในที่เกิดเหตุ?","โคอาลา","University of Adelaide",""],
+["เส้นผมมนุษย์หนึ่งเส้นสามารถรับน้ำหนักได้ประมาณเท่าใดก่อนขาด?","ประมาณ 100 กรัม","Royal Society of Chemistry",""],
+["เสียง “ท้องร้อง” มีชื่อเรียกทางการแพทย์ว่าอะไร?","บอร์บอริกมัส","Merriam-Webster Medical",""],
+["ส่วนใดของร่างกายมนุษย์ที่ไม่มีหลอดเลือดมาเลี้ยงเลย?","กระจกตา","American Academy of Ophthalmology",""],
+["โดยทั่วไปมนุษย์ไม่สามารถทำสิ่งใดได้ขณะลืมตา?","จาม","Library of Congress",""],
+["อาชีพ “นักดำน้ำเก็บลูกกอล์ฟ” ทำงานอยู่ที่ใด?","บ่อน้ำในสนามกอล์ฟ","The New York Times",""],
+["อาชีพ “whipping boy” ในราชสำนักอังกฤษยุคก่อนมีหน้าที่อะไร?","รับโทษเฆี่ยนแทนเจ้าชาย","Britannica",""],
+["ต่อมรับรสของมนุษย์มีอายุเฉลี่ยประมาณกี่วันก่อนถูกสร้างขึ้นใหม่?","ประมาณ 10 วัน","NIH",""],
+["กระดูกชิ้นใดยาวที่สุดในร่างกายมนุษย์?","กระดูกต้นขา (femur)","NIH",""]
+]}
+];
+function hashId(s){var h=5381;for(var i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return 'q'+(h>>>0).toString(36);}
+var ALL=[];
+(function(){var seen={};for(var i=0;i<QDB.length;i++){var c=QDB[i];for(var j=0;j<c.items.length;j++){
+  var it=c.items[j],id=hashId(it[0]);if(seen[id])continue;seen[id]=1;
+  ALL.push({id:id,cat:c.c,emo:c.e,q:it[0],a:it[1],src:it[2]||'',yr:it[3]||''});}}})();
+
+/* ============ question memory ============ */
+var LS_USED='soundfishy.used.v5',LS_PROF='soundfishy.profile.v1',LS_TOK='soundfishy.token.v1',LS_SESS='soundfishy.session.v1';
+function lsG(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsS(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+var usedSet={},usedCount=0,sessionUsed={},pool=[];
+function loadUsed(){usedSet={};usedCount=0;var r=lsG(LS_USED);if(r){try{var a=JSON.parse(r);
+  if(Object.prototype.toString.call(a)==='[object Array]')for(var i=0;i<a.length;i++){if(typeof a[i]==='string'&&!usedSet[a[i]]){usedSet[a[i]]=1;usedCount++;}}
+}catch(e){showError('localStorage: '+e.message);}}}
+function saveUsed(){var a=[];for(var k in usedSet)if(usedSet.hasOwnProperty(k))a.push(k);lsS(LS_USED,JSON.stringify(a));}
+function usedIds(){var a=[];for(var k in usedSet)if(usedSet.hasOwnProperty(k))a.push(k);return a;}
+function addUsedIds(arr){if(!arr||!arr.length)return;var ch=false;
+  for(var i=0;i<arr.length;i++){var id=arr[i];if(typeof id==='string'&&!usedSet[id]){usedSet[id]=1;usedCount++;ch=true;}}
+  if(ch){saveUsed();updateStats();}}
+function resetUsed(){usedSet={};usedCount=0;sessionUsed={};pool=[];saveUsed();updateStats();}
+function refill(){var inp={};for(var i=0;i<pool.length;i++)inp[pool[i].id]=1;var add=[];
+  for(var j=0;j<ALL.length;j++){var q=ALL[j];if(!usedSet[q.id]&&!sessionUsed[q.id]&&!inp[q.id])add.push(q);}
+  shuffle(add);pool=pool.concat(add);}
+function pickQ(){if(pool.length<10)refill();
+  while(pool.length){var q=pool.shift();if(usedSet[q.id]||sessionUsed[q.id])continue;return q;}return null;}
+function markUsed(q){if(!usedSet[q.id]){usedSet[q.id]=1;usedCount++;}sessionUsed[q.id]=1;saveUsed();updateStats();
+  if(NET.role==='host')netBroadcast({t:'used',ids:[q.id]});}
+function updateStats(){var t=ALL.length,l=t-usedCount;
+  $('stUsed').textContent=String(usedCount);$('stLeft').textContent=String(l);$('stAll').textContent=String(t);
+  $('emptyTotal').textContent=String(t);
+  $('stNote').textContent=l===0?'⚠️ คำถามหมดคลัง — กดรีเซ็ต':(l<=20?('⚠️ เหลืออีกแค่ '+l+' ข้อ!'):'คำถามทุกข้ออ้างอิงข้อมูลจริง • ไม่สุ่มซ้ำแน่นอน ✅ (ออนไลน์รวมประวัติทุกเครื่อง)');}
+
+/* ============ audio ============ */
+var sfxOn=true,musicOn=false,actx=null,mt=null,ms=0;
+function ac(){if(!actx){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;actx=new C();}
+  if(actx.state==='suspended'){try{actx.resume();}catch(e){}}return actx;}
+function tone(f,d,ty,v,dl){var c=ac();if(!c)return;var t0=c.currentTime+(dl||0);
+  var o=c.createOscillator(),g=c.createGain();o.type=ty||'sine';o.frequency.setValueAtTime(f,t0);
+  g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(v||.15,t0+.02);
+  g.gain.exponentialRampToValueAtTime(.0001,t0+d);o.connect(g);g.connect(c.destination);o.start(t0);o.stop(t0+d+.05);}
+function sfx(k){if(!sfxOn)return;try{
+  if(k==='tap')tone(640,.08,'triangle',.12);
+  else if(k==='pop'){tone(320,.1,'sine',.17);tone(700,.12,'sine',.11,.05);}
+  else if(k==='good'){tone(523,.12,'triangle',.16);tone(659,.12,'triangle',.16,.1);tone(784,.22,'triangle',.16,.2);}
+  else if(k==='bad'){tone(220,.2,'sawtooth',.13);tone(140,.33,'sawtooth',.12,.12);}
+  else if(k==='rev'){tone(392,.14,'sine',.15);tone(494,.14,'sine',.15,.11);tone(587,.28,'sine',.15,.22);}
+  else if(k==='spin'){for(var i=0;i<12;i++)tone(360+i*42,.07,'square',.06,i*0.12);}
+  else if(k==='net')tone(880,.09,'square',.08);
+}catch(e){}}
+var MEL=[392,440,523,587,523,440,349,392];
+function startMusic(){stopMusic();ms=0;mt=setInterval(function(){if(!musicOn)return;var n=MEL[ms%MEL.length];
+  tone(n,.55,'sine',.04);tone(n/2,.7,'triangle',.03,.02);ms++;},520);}
+function stopMusic(){if(mt){clearInterval(mt);mt=null;}}
+
+/* ============ deco ============ */
+(function(){var bg=$('bg');
+ for(var r=0;r<4;r++){var y=el('div','ray');y.style.left=(7+r*26)+'%';y.style.animationDelay=(r*1.6)+'s';bg.appendChild(y);}
+ for(var i=0;i<28;i++){var b=el('div','bub'),s=6+Math.random()*22;b.style.width=s+'px';b.style.height=s+'px';
+  b.style.left=(Math.random()*100)+'%';b.style.animationDuration=(8+Math.random()*13)+'s';
+  b.style.animationDelay=(Math.random()*13)+'s';bg.appendChild(b);}
+ var F=['🐠','🐟','🐡','🦐','🐙','🦑','🐢','🦈','🐬'];
+ for(var f=0;f<9;f++){var n=el('div','swim',F[f%F.length]);n.style.top=(5+Math.random()*82)+'%';
+  n.style.fontSize=(20+Math.random()*28)+'px';n.style.animationDuration=(24+Math.random()*26)+'s';
+  n.style.animationDelay=(-Math.random()*22)+'s';n.style.opacity=String(.4+Math.random()*.4);bg.appendChild(n);}
+})();
+
+/* ============ profile / avatars ============ */
+var AVA=['🐟','🐠','🐡','🦈','🐙','🦑','🦐','🦀','🐬','🐳','🐢','🦭','🐧','🦦','🦞','🪼','🐚','⭐','🦜','🐸'];
+var PROFILE={name:'',emoji:'🐟'};
+function loadProfile(){var r=lsG(LS_PROF);if(r){try{var p=JSON.parse(r);if(p&&p.name)PROFILE.name=String(p.name).slice(0,14);
+  if(p&&p.emoji)PROFILE.emoji=p.emoji;}catch(e){}}}
+function saveProfile(){lsS(LS_PROF,JSON.stringify(PROFILE));}
+function myToken(){var t=lsG(LS_TOK);if(!t){t='t'+Math.random().toString(36).slice(2)+Date.now().toString(36);lsS(LS_TOK,t);}return t;}
+function buildAvaGrid(){var g=$('avaGrid');clear(g);
+ for(var i=0;i<AVA.length;i++)(function(i){var b=el('button',null,AVA[i]);b.type='button';
+  if(AVA[i]===PROFILE.emoji)b.className='sel';
+  b.addEventListener('click',guard(function(){PROFILE.emoji=AVA[i];sfx('tap');buildAvaGrid();}));g.appendChild(b);})(i);}
+
+/* ============================================================
+   ENGINE
+   ============================================================ */
+var G=null;
+function cands(){var a=[];for(var i=0;i<G.players.length;i++)if(i!==G.qIdx)a.push(i);return a;}
+function isRev(i){for(var k=0;k<G.revealed.length;k++)if(G.revealed[k].idx===i)return true;return false;}
+function remain(){var c=cands(),o=[];for(var i=0;i<c.length;i++)if(!isRev(c[i]))o.push(c[i]);return o;}
+
+function newGame(mode,players,rpp){
+  G={mode:mode,players:players,rpp:rpp,turn:0,total:players.length*rpp,phase:'idle',
+     qIdx:0,freshIdx:-1,Q:null,revealed:[],pending:0,dealIdx:0,lastResult:null,suspense:null};
+  for(var i=0;i<players.length;i++)players[i].score=0;
+}
+function startTurn(){
+  if(!G)return;
+  if(G.turn>=G.total){G.phase='gameend';pushAll();return;}
+  var q=pickQ();
+  if(!q){G.phase='empty';pushAll();return;}
+  G.Q=q;markUsed(q);
+  G.qIdx=G.turn%G.players.length;
+  var c=cands();
+  G.freshIdx=c[Math.floor(Math.random()*c.length)];
+  G.revealed=[];G.pending=0;G.lastResult=null;G.dealIdx=0;G.suspense=null;
+  G.phase=(G.mode==='local')?'deal':'board';
+  pushAll();
+}
+function goHunt(actor){
+  if(!G||G.phase!=='board')return;
+  if(G.mode==='online'&&actor!==G.qIdx)return;
+  G.phase='hunt';sfx('pop');pushAll();
+}
+/* ---- pick with suspense animation ---- */
+function doPick(actor,target){
+  if(!G||G.phase!=='hunt'||G.suspense)return;
+  if(G.mode==='online'&&actor!==G.qIdx)return;
+  var rem=remain(),ok=false,i;
+  for(i=0;i<rem.length;i++)if(rem[i]===target)ok=true;
+  if(!ok)return;
+  G.suspense={idx:target,wasLast:(rem.length===1)};
+  sfx('spin');
+  pushAll();
+  setTimeout(guard(resolvePick),1600);
+}
+function resolvePick(){
+  if(!G||!G.suspense)return;
+  var s=G.suspense;G.suspense=null;
+  if(s.idx===G.freshIdx){
+    G.revealed.push({idx:s.idx,role:'fresh'});
+    endTurn(s.wasLast?'perfect':'bust');
+  }else{
+    G.revealed.push({idx:s.idx,role:'rotten'});
+    G.pending+=1;sfx('good');pushAll();
+  }
+}
+function doStop(actor){
+  if(!G||G.phase!=='hunt'||G.suspense)return;
+  if(G.mode==='online'&&actor!==G.qIdx)return;
+  endTurn('stop');
+}
+/* ============================================================
+   SCORING (audited)
+   - ปลาที่ไม่ถูกเปิด  : เจ้าของได้ +2 เสมอ (ทั้งสดและเน่า)
+   - ปลาสดที่ถูกเปิดก่อนกำจัดปลาเน่าครบ : เจ้าของปลาสด +2 (ผู้เปิดไม่ได้)
+   - ปลาเน่าที่ถูกเปิด : 0
+   - ปลาสดที่ถูกชี้เป็นคนสุดท้ายถูกต้อง : 0 (คนถามได้ +2 แทน)
+   - คนถาม : perfect = pending+2 | stop = pending | bust = 0
+   ============================================================ */
+function endTurn(type){
+  var d={},why={},i;
+  for(i=0;i<G.players.length;i++){d[i]=0;why[i]='';}
+  var rem=remain();
+  for(i=0;i<rem.length;i++){
+    var pi=rem[i];
+    d[pi]+=2;
+    why[pi]=(pi===G.freshIdx)?'ปลาสดรอดไม่ถูกเปิด +2':'ปลาเน่าลวงสำเร็จ ไม่ถูกเปิด +2';
+  }
+  for(i=0;i<G.revealed.length;i++){
+    var r=G.revealed[i];
+    if(r.role==='fresh'){
+      if(type==='bust'){d[r.idx]+=2;why[r.idx]='ถูกเปิดก่อนกำจัดปลาเน่าครบ — เจ้าของปลาสดได้ +2';}
+      else why[r.idx]='ถูกชี้เป็นปลาสดคนสุดท้ายอย่างถูกต้อง +0';
+    }else{
+      why[r.idx]='ถูกกำจัด (ปลาเน่า) +0';
+    }
+  }
+  var qp=0;
+  if(type==='perfect'){qp=G.pending+2;why[G.qIdx]='กำจัดปลาเน่า '+G.pending+' ตัว (+'+G.pending+') และชี้ปลาสดถูก (+2)';}
+  else if(type==='stop'){qp=G.pending;why[G.qIdx]='หยุดเก็บคะแนนจากปลาเน่า '+G.pending+' ตัว (+'+G.pending+')';}
+  else {qp=0;why[G.qIdx]='เปิดโดนปลาสดก่อนกำหนด — คะแนนตานี้เป็น 0';}
+  d[G.qIdx]+=qp;
+
+  for(i=0;i<G.players.length;i++)G.players[i].score+=d[i];
+  G.lastResult={type:type,answer:G.Q.a,question:G.Q.q,cat:G.Q.cat,emo:G.Q.emo,src:G.Q.src,yr:G.Q.yr,
+    freshIdx:G.freshIdx,qIdx:G.qIdx,revealed:G.revealed.slice(),deltas:d,why:why,remaining:rem,pending:G.pending};
+  G.phase='rend';
+  sfx(type==='bust'?'bad':'rev');
+  pushAll();
+}
+function nextTurn(actor){
+  if(!G||G.phase!=='rend')return;
+  if(G.mode==='online'&&actor!==0)return;
+  G.turn++;
+  if(G.turn>=G.total){G.phase='gameend';sfx('good');pushAll();}
+  else startTurn();
+}
+function playAgain(actor){
+  if(!G)return;
+  if(G.mode==='online'&&actor!==0)return;
+  for(var i=0;i<G.players.length;i++)G.players[i].score=0;
+  G.turn=0;startTurn();
+}
+
+/* ---------- view builder ---------- */
+function buildView(pi){
+  var v={mode:G.mode,phase:G.phase,turn:G.turn+1,total:G.total,youIdx:pi,role:null,answer:null,
+    canAct:false,isHost:(pi===0),pending:G.pending,players:[],remaining:remain(),
+    result:G.lastResult,question:null,qIdx:G.qIdx,suspense:(G.suspense?G.suspense.idx:-1),
+    qName:G.players[G.qIdx]?G.players[G.qIdx].name:'',qEmoji:G.players[G.qIdx]?G.players[G.qIdx].emoji:'',
+    code:(NET.code||''),usedCount:usedCount,leftCount:ALL.length-usedCount};
+  if(G.Q)v.question={q:G.Q.q,cat:G.Q.cat,emo:G.Q.emo};
+  var endPhase=(G.phase==='rend'||G.phase==='gameend');
+  for(var i=0;i<G.players.length;i++){
+    var p=G.players[i],rv=null;
+    for(var k=0;k<G.revealed.length;k++)if(G.revealed[k].idx===i)rv=G.revealed[k].role;
+    if(endPhase)rv=(i===G.freshIdx)?'fresh':(i===G.qIdx?null:'rotten');
+    v.players.push({name:p.name,emoji:p.emoji,score:p.score,rev:rv,isQ:(i===G.qIdx),on:p.connected!==false});
+  }
+  if(pi>=0&&pi<G.players.length){
+    v.role=(pi===G.qIdx)?'questioner':((pi===G.freshIdx)?'fresh':'rotten');
+    v.canAct=(pi===G.qIdx);
+    if(v.role==='fresh'&&G.Q)v.answer=G.Q.a;
+  }else{v.canAct=true;}
+  if(endPhase&&G.Q)v.answer=G.Q.a;
+  return v;
+}
+function pushAll(){
+  if(!G)return;
+  if(G.mode==='local'){renderView(buildView(-1));return;}
+  for(var i=1;i<G.players.length;i++){
+    var p=G.players[i];
+    if(p.conn&&p.conn.open){try{p.conn.send({t:'view',v:buildView(i)});}catch(e){}}
+  }
+  renderView(buildView(0));
+}
+
+/* ============================================================
+   NETWORK (hardened)
+   ============================================================ */
+var PEEROPT={debug:0,config:{iceServers:[
+  {urls:'stun:stun.l.google.com:19302'},
+  {urls:'stun:stun1.l.google.com:19302'},
+  {urls:'stun:global.stun.twilio.com:3478'},
+  {urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject',credential:'openrelayproject'}
+]}};
+var NET={role:null,peer:null,code:null,myIdx:-1,hostConn:null,tries:0,joinTries:0};
+var P=[],LOB={rpp:2,started:false};
+var ALPH='23456789ABCDEFGHJKMNPQRSTUVWXYZ'; /* ไม่มี 0 1 I L O */
+function genCode(){var s='';for(var i=0;i<5;i++)s+=ALPH.charAt(Math.floor(Math.random()*ALPH.length));return s;}
+function pidOf(code){return 'sndfishy3-'+code.toUpperCase();}
+function netBroadcast(m){for(var i=1;i<P.length;i++){var c=P[i].conn;if(c&&c.open){try{c.send(m);}catch(e){}}}}
+function peerReady(){return typeof window.Peer==='function';}
+function lobNet(msg){var n=$('lobNet');if(n)n.textContent=msg;}
+
+function hostCreate(){
+  if(!peerReady()){toast('โหลด PeerJS ไม่สำเร็จ — เล่นออนไลน์ไม่ได้');return;}
+  NET.role='host';NET.tries=0;
+  tryHost(genCode());
+}
+function tryHost(code){
+  NET.code=code;
+  try{if(NET.peer)NET.peer.destroy();}catch(e){}
+  try{NET.peer=new Peer(pidOf(code),PEEROPT);}catch(e){showError('Peer: '+e.message);return;}
+  var opened=false;
+  var watchdog=setTimeout(guard(function(){
+    if(opened)return;
+    if(NET.tries<5){NET.tries++;tryHost(genCode());}
+    else lobNet('❌ เชื่อมต่อเซิร์ฟเวอร์ไม่สำเร็จ ลองใหม่อีกครั้ง');
+  }),12000);
+  NET.peer.on('open',guard(function(){
+    opened=true;clearTimeout(watchdog);
+    P=[{name:PROFILE.name,emoji:PROFILE.emoji,token:myToken(),conn:null,connected:true,score:0}];
+    NET.myIdx=0;LOB.started=false;G=null;
+    lsS(LS_SESS,JSON.stringify({code:code,host:true}));
+    renderLobby();show('sc-lobby');
+    lobNet('✅ ห้องพร้อมแล้ว — เพื่อนกรอกรหัสนี้เพื่อเข้าร่วมได้ทันที');
+    toast('สร้างห้องแล้ว! รหัส '+code);
+  }));
+  NET.peer.on('disconnected',guard(function(){
+    lobNet('⚠️ หลุดจากเซิร์ฟเวอร์ชั่วคราว — กำลังเชื่อมต่อใหม่...');
+    try{NET.peer.reconnect();}catch(e){}
+  }));
+  NET.peer.on('error',guard(function(e){
+    var t=(e&&e.type)?e.type:'error';
+    if((t==='unavailable-id'||t==='network'||t==='server-error'||t==='socket-error')&&NET.tries<5&&!opened){
+      NET.tries++;clearTimeout(watchdog);tryHost(genCode());return;
+    }
+    if(t==='peer-unavailable')return;
+    lobNet('⚠️ ปัญหาการเชื่อมต่อ: '+t);
+  }));
+  NET.peer.on('connection',guard(function(conn){
+    conn.on('data',guard(function(m){onHostData(conn,m);}));
+    conn.on('close',guard(function(){
+      for(var i=1;i<P.length;i++)if(P[i].conn===conn){P[i].connected=false;P[i].conn=null;}
+      if(LOB.started&&G)pushAll();else renderLobby();
+    }));
+    conn.on('error',function(){});
+  }));
+}
+function onHostData(conn,m){
+  if(!m||!m.t)return;
+  if(m.t==='hello'){
+    addUsedIds(m.used);
+    var idx=-1,i;
+    for(i=0;i<P.length;i++)if(P[i].token&&m.token&&P[i].token===m.token)idx=i;
+    if(idx<0)for(i=0;i<P.length;i++)if(P[i].name===m.name&&!P[i].connected)idx=i;
+    if(idx<0){
+      if(LOB.started){try{conn.send({t:'err',m:'เกมเริ่มไปแล้ว และไม่พบชื่อ/อุปกรณ์เดิมในห้องนี้'});}catch(e){}return;}
+      if(P.length>=10){try{conn.send({t:'err',m:'ห้องเต็มแล้ว (10 คน)'});}catch(e){}return;}
+      var nm=String(m.name||'ผู้เล่น').slice(0,14),base=nm,c2=1,dup=true;
+      while(dup){dup=false;for(i=0;i<P.length;i++)if(P[i].name===nm)dup=true;if(dup){c2++;nm=base+' '+c2;}}
+      P.push({name:nm,emoji:m.emoji||'🐟',token:m.token,conn:conn,connected:true,score:0});
+      idx=P.length-1;
+    }else{
+      P[idx].conn=conn;P[idx].connected=true;
+      if(m.emoji)P[idx].emoji=m.emoji;
+    }
+    conn._pi=idx;
+    try{conn.send({t:'you',idx:idx,code:NET.code,used:usedIds()});}catch(e){}
+    sfx('net');
+    if(LOB.started&&G)pushAll();else renderLobby();
+    return;
+  }
+  var pi=(typeof conn._pi==='number')?conn._pi:-1;
+  if(pi<0)return;
+  if(m.t==='act'){
+    if(m.a==='hunt')goHunt(pi);
+    else if(m.a==='pick')doPick(pi,m.i);
+    else if(m.a==='stop')doStop(pi);
+    else if(m.a==='next')nextTurn(pi);
+    else if(m.a==='again')playAgain(pi);
+  }
+}
+function hostStart(){
+  if(P.length<3){toast('ต้องมีผู้เล่นอย่างน้อย 3 คน');return;}
+  LOB.started=true;
+  newGame('online',P,LOB.rpp);
+  netBroadcast({t:'start'});
+  startTurn();
+}
+/* ---------- client ---------- */
+function jstat(m){var n=$('joinStatus');if(n)n.textContent=m;}
+function clientJoin(code){
+  if(!peerReady()){toast('โหลด PeerJS ไม่สำเร็จ — เล่นออนไลน์ไม่ได้');return;}
+  NET.role='client';NET.code=code;NET.joinTries=0;
+  jstat('⏳ กำลังเชื่อมต่อเซิร์ฟเวอร์...');
+  try{if(NET.peer)NET.peer.destroy();}catch(e){}
+  try{NET.peer=new Peer(null,PEEROPT);}catch(e){showError('Peer: '+e.message);return;}
+  NET.peer.on('open',guard(function(){connectAttempt(code);}));
+  NET.peer.on('disconnected',guard(function(){try{NET.peer.reconnect();}catch(e){}}));
+  NET.peer.on('error',guard(function(e){
+    var t=(e&&e.type)?e.type:'error';
+    if(t==='peer-unavailable'){
+      if(NET.joinTries<3){jstat('🔄 ยังไม่พบห้อง กำลังลองใหม่ ('+NET.joinTries+'/3)...');setTimeout(guard(function(){connectAttempt(code);}),1500);}
+      else jstat('❌ ไม่พบห้องนี้ — ตรวจรหัสอีกครั้ง หรือให้เจ้าของห้องสร้างห้องใหม่');
+      return;
+    }
+    jstat('❌ '+t+' — ลองเปลี่ยนเครือข่าย/เปิดผ่าน https');
+  }));
+}
+function connectAttempt(code){
+  if(!NET.peer)return;
+  NET.joinTries++;
+  jstat('🔎 กำลังค้นหาห้อง '+code+' (ครั้งที่ '+NET.joinTries+')...');
+  var c;
+  try{c=NET.peer.connect(pidOf(code),{reliable:true});}catch(e){jstat('❌ '+e.message);return;}
+  NET.hostConn=c;
+  var done=false;
+  var to=setTimeout(guard(function(){
+    if(done)return;
+    try{c.close();}catch(e){}
+    if(NET.joinTries<3)connectAttempt(code);
+    else jstat('❌ เชื่อมต่อไม่สำเร็จ — ตรวจรหัส หรือลองใช้เครือข่ายอื่น');
+  }),10000);
+  c.on('open',guard(function(){
+    done=true;clearTimeout(to);
+    c.send({t:'hello',token:myToken(),name:PROFILE.name,emoji:PROFILE.emoji,used:usedIds()});
+    jstat('✅ เชื่อมต่อสำเร็จ');
+    lsS(LS_SESS,JSON.stringify({code:code,host:false,name:PROFILE.name,emoji:PROFILE.emoji}));
+    sfx('net');
+  }));
+  c.on('data',guard(onClientData));
+  c.on('close',guard(function(){
+    if(!done)return;
+    toast('หลุดจากห้อง — กดกลับเข้าห้องเดิมได้');hudOff();show('sc-home');refreshRejoin();
+  }));
+  c.on('error',function(){});
+}
+function onClientData(m){
+  if(!m||!m.t)return;
+  if(m.t==='you'){NET.myIdx=m.idx;NET.code=m.code;addUsedIds(m.used);renderLobbyClientWait();return;}
+  if(m.t==='lobby'){renderLobbyFrom(m.v);show('sc-lobby');return;}
+  if(m.t==='used'){addUsedIds(m.ids);return;}
+  if(m.t==='view'){renderView(m.v);return;}
+  if(m.t==='err'){toast(m.m||'error');jstat('❌ '+(m.m||''));show('sc-join');return;}
+}
+function clientAct(a,i){if(NET.hostConn&&NET.hostConn.open){try{NET.hostConn.send({t:'act',a:a,i:i});}catch(e){}}}
+function leaveRoom(){
+  try{if(NET.peer)NET.peer.destroy();}catch(e){}
+  NET.role=null;NET.peer=null;NET.hostConn=null;NET.code=null;NET.myIdx=-1;
+  P=[];G=null;LOB.started=false;hudOff();show('sc-home');refreshRejoin();
+}
+
+/* ============ lobby render ============ */
+function lobbyData(){
+  var a=[];for(var i=0;i<P.length;i++)a.push({name:P[i].name,emoji:P[i].emoji,on:P[i].connected});
+  return {code:NET.code,players:a,rpp:LOB.rpp,started:LOB.started};
+}
+function renderLobby(){
+  if(NET.role!=='host')return;
+  var d=lobbyData();renderLobbyFrom(d,true);netBroadcast({t:'lobby',v:d});
+}
+function renderLobbyClientWait(){
+  $('codeBox').textContent=NET.code||'—';
+  $('lobHostBox').style.display='none';$('lobWait').style.display='block';
+  lobNet('✅ อยู่ในห้องแล้ว');
+  show('sc-lobby');
+}
+function renderLobbyFrom(d,isHost){
+  $('codeBox').textContent=d.code||'—';
+  var L=$('lobList');clear(L);
+  for(var i=0;i<d.players.length;i++){
+    var p=d.players[i],li=el('li');
+    li.appendChild(el('span',null,p.emoji+'  '+p.name+(i===0?'  👑':'')));
+    li.appendChild(el('span','pill '+(p.on?'on':'off'),p.on?'ออนไลน์':'หลุด'));
+    L.appendChild(li);
+  }
+  $('lobCount').textContent=String(d.players.length);
+  LOB.rpp=d.rpp;
+  $('rppVal').textContent=String(d.rpp);
+  $('rppNote').textContent='ผู้เล่น '+d.players.length+' คน × '+d.rpp+' รอบ = '+(d.players.length*d.rpp)+' ตา';
+  var host=(isHost===true)||(NET.role==='host');
+  $('lobHostBox').style.display=host?'block':'none';
+  $('lobWait').style.display=host?'none':'block';
+}
+
+/* ============ HUD ============ */
+function hudOff(){$('hud').classList.remove('on');}
+function renderHud(v){
+  $('hud').classList.add('on');
+  $('hudTurn').textContent='🎲 ตาที่ '+v.turn+' / '+v.total;
+  $('hudRoom').textContent=(v.mode==='online'&&v.code)?('ห้อง '+v.code):'โหมด Local';
+  var L=$('hudList');clear(L);
+  for(var i=0;i<v.players.length;i++){
+    var p=v.players[i],d=el('div','hp'+(i===v.youIdx?' me':'')+(p.isQ?' isq':''));
+    d.appendChild(el('span','e',p.emoji));
+    d.appendChild(el('div','n',(p.isQ?'🎤 ':'')+p.name));
+    d.appendChild(el('div','s',String(p.score)));
+    if(v.mode==='online'&&!p.on)d.appendChild(el('div','off','⚠️'));
+    L.appendChild(d);
+  }
+}
+
+/* ============ VIEW RENDER ============ */
+function renderView(v){
+  if(!v)return;
+  if(v.phase==='empty'){hudOff();show('sc-empty');return;}
+  renderHud(v);
+  if(v.phase==='deal'){renderDeal();return;}
+  if(v.phase==='board'){renderBoard(v);show('sc-board');return;}
+  if(v.phase==='hunt'){renderHunt(v);show('sc-hunt');return;}
+  if(v.phase==='rend'){renderRend(v);show('sc-rend');return;}
+  if(v.phase==='gameend'){renderEnd(v);show('sc-end');return;}
+}
+function roleBox(role){
+  var box=el('div','roleCard '+(role==='fresh'?'r-fresh':(role==='rotten'?'r-rotten':'r-q')));
+  box.appendChild(el('span','em',role==='fresh'?'🐟':(role==='rotten'?'🐠':'🎤')));
+  box.appendChild(el('div','t',role==='fresh'?'FRESH FISH — ปลาสด':(role==='rotten'?'ROTTEN FISH — ปลาเน่า':'QUESTIONER — คนตั้งคำถาม')));
+  box.appendChild(el('div','small',
+    role==='fresh'?'คุณรู้คำตอบจริง! ตอบให้คนถามเชื่อว่าคุณ “มั่ว”'
+   :(role==='rotten'?'คุณไม่รู้คำตอบ! มั่วให้เนียนเหมือนรู้จริง'
+   :'คุณไม่เห็นคำตอบ — อ่านคำถาม ฟังทุกคนตอบ แล้วหาปลาสดให้เจอ')));
+  return box;
+}
+function renderBoard(v){
+  $('boardTag').textContent='ตาที่ '+v.turn+'/'+v.total+' • '+(v.question?v.question.emo+' '+v.question.cat:'');
+  $('boardQName').textContent='🎤 '+v.qEmoji+' '+v.qName;
+  $('boardCat').textContent='หมวด '+(v.question?v.question.emo+' '+v.question.cat:'');
+  $('boardQ').textContent=v.question?v.question.q:'';
+  var rw=$('boardRoleWrap');clear(rw);
+  var aw=$('boardAnsWrap');clear(aw);
+  if(v.role){
+    rw.appendChild(roleBox(v.role));
+    if(v.role==='fresh'&&v.answer){
+      var a=el('div','abox');a.appendChild(el('div','small','คำตอบที่แท้จริง (เห็นคนเดียว)'));
+      a.appendChild(el('div','v',v.answer));aw.appendChild(a);
+    }else{
+      var lb=el('div','lockbox');
+      lb.appendChild(el('div',null,'🔒 คำตอบถูกซ่อนไว้'));
+      lb.appendChild(el('div','small',v.role==='questioner'?'คนตั้งคำถามไม่เห็นคำตอบ':'ปลาเน่าไม่เห็นคำตอบ — มั่วให้เนียน!'));
+      aw.appendChild(lb);
+    }
+  }else{
+    var lb2=el('div','lockbox');
+    lb2.appendChild(el('div',null,'🔒 คำตอบอยู่กับปลาสดเท่านั้น'));
+    lb2.appendChild(el('div','small','ให้ทุกคนตอบคำถามตามที่ตัวเองเห็น'));
+    aw.appendChild(lb2);
+  }
+  var b=$('btnGoHunt');
+  if(v.canAct){b.disabled=false;b.textContent='🔪 กำจัดปลาเน่า ล่าปลาสด';$('boardHint').textContent='คุยกันได้ไม่จำกัดเวลา — เมื่อพร้อมแล้วกดปุ่มเพื่อเริ่มเปิดป้ายชื่อ';}
+  else{b.disabled=true;b.textContent='⏳ รอคนตั้งคำถาม';$('boardHint').textContent='รอ '+v.qName+' ซักถามให้ครบแล้วกดเริ่มกำจัดปลาเน่า';}
+}
+function renderHunt(v){
+  var busy=(v.suspense>=0);
+  $('huntQName').textContent='🎤 '+v.qEmoji+' '+v.qName;
+  $('huntState').textContent=busy?'🎲 กำลังหมุนป้ายชื่อ...':(v.canAct?'ตาคุณ — เลือกคนที่คิดว่าเป็นปลาเน่า':'กำลังรอ '+v.qName+' เลือก...');
+  $('huntPending').textContent=String(v.pending);
+  $('huntLeft').textContent=String(v.remaining.length);
+  var g=$('huntGrid');clear(g);
+  for(var i=0;i<v.players.length;i++){
+    if(v.players[i].isQ)continue;
+    (function(idx,p){
+      var spinning=(idx===v.suspense);
+      var b=el('button','hcard'+(spinning?' spin':(p.rev==='rotten'?' done-rot':(p.rev==='fresh'?' done-fresh':''))));
+      b.type='button';
+      b.appendChild(el('span','e',spinning?'❓':(p.rev?(p.rev==='fresh'?'🐟':'🐠'):p.emoji)));
+      b.appendChild(el('div',null,p.name));
+      b.appendChild(el('div','small',spinning?'กำลังเปิด...':(p.rev?(p.rev==='fresh'?'ปลาสด!':'ปลาเน่า ✓'):'ยังไม่เปิด')));
+      if(p.rev||!v.canAct||busy)b.disabled=true;
+      else b.addEventListener('click',guard(function(){
+        sfx('tap');
+        if(G&&G.mode==='local')doPick(v.qIdx,idx);
+        else if(NET.role==='host')doPick(0,idx);
+        else clientAct('pick',idx);
+      }));
+      g.appendChild(b);
+    })(i,v.players[i]);
+  }
+  var s=$('btnStop');
+  s.disabled=(!v.canAct||busy);
+  s.textContent='✋ หยุด & เก็บ '+v.pending+' คะแนน';
+}
+function renderRend(v){
+  var r=v.result;if(!r)return;
+  $('reTurn').textContent=String(v.turn);
+  $('reQ').textContent=r.question;
+  $('reA').textContent=r.answer;
+  $('reSrc').textContent='📎 ที่มา: '+(r.src||'-')+(r.yr?(' ('+r.yr+')'):'');
+  $('reFresh').textContent='🐟 '+v.players[r.freshIdx].emoji+' '+v.players[r.freshIdx].name;
+  var vd=$('reVerdict');
+  if(r.type==='perfect'){vd.textContent='🎯 สุดยอด! กำจัดปลาเน่าครบและชี้ปลาสดถูก';vd.className='big win';$('reEmo').textContent='🏆';}
+  else if(r.type==='bust'){vd.textContent='💥 เปิดโดนปลาสดก่อนเวลา! คนถามได้ 0 คะแนนในตานี้';vd.className='big lose';$('reEmo').textContent='💥';}
+  else{vd.textContent='✋ คนถามหยุดเก็บคะแนน — ปลาที่ยังไม่ถูกเปิดได้ +2 ทุกตัว';vd.className='big win';$('reEmo').textContent='🛑';}
+  var sq=$('reSeq');clear(sq);
+  if(!r.revealed.length){var li0=el('li');li0.appendChild(el('span',null,'ไม่ได้เปิดใครเลย'));sq.appendChild(li0);}
+  for(var i=0;i<r.revealed.length;i++){
+    var it=r.revealed[i],p=v.players[it.idx],li=el('li');
+    li.appendChild(el('span',null,(i+1)+'. '+p.emoji+' '+p.name));
+    li.appendChild(el('span','pill '+(it.role==='fresh'?'fresh':'rot'),it.role==='fresh'?'🐟 ปลาสด':'🐠 ปลาเน่า'));
+    sq.appendChild(li);
+  }
+  var dl=$('reDelta');clear(dl);
+  for(var k=0;k<v.players.length;k++){
+    var d=r.deltas[k]||0,pp=v.players[k],li2=el('li');
+    var left=el('span');
+    left.appendChild(document.createTextNode((k===r.qIdx?'🎤 ':(k===r.freshIdx?'🐟 ':'🐠 '))+pp.emoji+' '+pp.name));
+    left.appendChild(el('span','why',(r.why&&r.why[k])?r.why[k]:''));
+    li2.appendChild(left);
+    li2.appendChild(el('b',null,(d>0?'+'+d:'0')+'  →  '+pp.score));
+    dl.appendChild(li2);
+  }
+  var canNext=(v.mode==='local')||v.isHost;
+  $('btnNextTurn').style.display=canNext?'block':'none';
+  $('reWait').style.display=canNext?'none':'block';
+  $('btnNextTurn').textContent=(v.turn>=v.total)?'🏁 ดูผลรวม':'▶️ ตาต่อไป';
+}
+function renderEnd(v){
+  var L=$('endList');clear(L);
+  var arr=[];for(var i=0;i<v.players.length;i++)arr.push(v.players[i]);
+  arr.sort(function(a,b){return b.score-a.score;});
+  var med=['🥇','🥈','🥉'];
+  for(var k=0;k<arr.length;k++){
+    var li=el('li');
+    li.appendChild(el('span',null,(med[k]||(k+1)+'.')+' '+arr[k].emoji+' '+arr[k].name));
+    li.appendChild(el('b',null,arr[k].score+' คะแนน'));
+    L.appendChild(li);
+  }
+  $('btnAgain').style.display=((v.mode==='local')||v.isHost)?'block':'none';
+}
+
+/* ============ LOCAL deal/card ============ */
+function renderDeal(){
+  if(!G)return;
+  if(G.dealIdx>=G.players.length){G.phase='board';pushAll();return;}
+  $('dealTurn').textContent=String(G.turn+1);
+  $('dealName').textContent=G.players[G.dealIdx].emoji+' '+G.players[G.dealIdx].name;
+  $('dealLeft').textContent=String(G.players.length-G.dealIdx);
+  show('sc-deal');
+}
+function renderCard(){
+  var i=G.dealIdx,p=G.players[i];
+  var role=(i===G.qIdx)?'questioner':((i===G.freshIdx)?'fresh':'rotten');
+  $('cardOwner').textContent=p.emoji+' '+p.name;
+  var rc=$('cardRole');
+  rc.className='roleCard '+(role==='fresh'?'r-fresh':(role==='rotten'?'r-rotten':'r-q'));
+  $('cardEm').textContent=role==='fresh'?'🐟':(role==='rotten'?'🐠':'🎤');
+  $('cardT').textContent=role==='fresh'?'FRESH FISH — ปลาสด':(role==='rotten'?'ROTTEN FISH — ปลาเน่า':'QUESTIONER — คนตั้งคำถาม');
+  $('cardH').textContent=role==='fresh'?'คุณรู้คำตอบ! ตอบให้เขาคิดว่าคุณมั่ว'
+    :(role==='rotten'?'คุณไม่รู้คำตอบ! มั่วให้เนียน':'คุณไม่เห็นคำตอบ — จับปลาสดให้ได้');
+  $('cardCat').textContent='หมวด '+G.Q.emo+' '+G.Q.cat;
+  $('cardQ').textContent=G.Q.q;
+  var w=$('cardAns');clear(w);
+  if(role==='fresh'){
+    var a=el('div','abox');a.appendChild(el('div','small','คำตอบที่แท้จริง'));a.appendChild(el('div','v',G.Q.a));w.appendChild(a);
+  }else{
+    var lb=el('div','lockbox');lb.appendChild(el('div',null,'🔒 คำตอบถูกซ่อนไว้'));
+    lb.appendChild(el('div','small',role==='questioner'?'คนตั้งคำถามไม่เห็นคำตอบ':'ปลาเน่าไม่เห็นคำตอบ'));w.appendChild(lb);
+  }
+  show('sc-card');
+}
+
+/* ============================================================
+   WIRING
+   ============================================================ */
+var nextAfterProfile='create';
+$('btnLocal').addEventListener('click',guard(function(){sfx('pop');buildSetup();show('sc-setup');}));
+$('btnCreate').addEventListener('click',guard(function(){sfx('tap');nextAfterProfile='create';openProfile();}));
+$('btnJoin').addEventListener('click',guard(function(){sfx('tap');nextAfterProfile='join';openProfile();}));
+$('btnRejoin').addEventListener('click',guard(function(){
+  var r=lsG(LS_SESS);if(!r)return;
+  try{var s=JSON.parse(r);
+    if(s.host){toast('คุณเคยเป็นเจ้าของห้อง — สร้างห้องใหม่แทน');nextAfterProfile='create';openProfile();return;}
+    if(s.name)PROFILE.name=s.name;if(s.emoji)PROFILE.emoji=s.emoji;
+    $('codeInput').value=s.code||'';jstat('');sfx('tap');show('sc-join');
+  }catch(e){}
+}));
+function refreshRejoin(){
+  var r=lsG(LS_SESS),b=$('btnRejoin');
+  if(r){try{var s=JSON.parse(r);if(s&&s.code&&!s.host){b.style.display='block';b.textContent='↩️ กลับเข้าห้อง '+s.code+' (ชื่อเดิม)';return;}}catch(e){}}
+  b.style.display='none';
+}
+$('btnResetQ').addEventListener('click',guard(function(){
+  if(window.confirm('ล้างประวัติคำถาม ('+usedCount+' ข้อ) ในเครื่องนี้?')){resetUsed();sfx('good');toast('รีเซ็ตแล้ว — '+ALL.length+' ข้อพร้อมใช้');}
+}));
+function openProfile(){loadProfile();$('profName').value=PROFILE.name||'';buildAvaGrid();show('sc-profile');}
+$('btnProfBack').addEventListener('click',guard(function(){sfx('tap');show('sc-home');}));
+$('btnProfGo').addEventListener('click',guard(function(){
+  var n=($('profName').value||'').trim();
+  if(!n){toast('ใส่ชื่อก่อนนะ');return;}
+  PROFILE.name=n.slice(0,14);saveProfile();sfx('pop');
+  if(nextAfterProfile==='create')hostCreate();
+  else{jstat('');show('sc-join');}
+}));
+$('btnJoinBack').addEventListener('click',guard(function(){sfx('tap');show('sc-home');}));
+$('btnJoinGo').addEventListener('click',guard(function(){
+  var c=($('codeInput').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(c.length<4){toast('รหัสห้องไม่ถูกต้อง');return;}
+  sfx('tap');clientJoin(c);
+}));
+$('btnCopy').addEventListener('click',guard(function(){
+  var t=$('codeBox').textContent;
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t);toast('คัดลอกแล้ว: '+t);}
+  else toast('รหัสห้อง: '+t);}catch(e){toast('รหัสห้อง: '+t);}
+}));
+$('rppPlus').addEventListener('click',guard(function(){if(LOB.rpp<5){LOB.rpp++;sfx('tap');renderLobby();}}));
+$('rppMinus').addEventListener('click',guard(function(){if(LOB.rpp>1){LOB.rpp--;sfx('tap');renderLobby();}}));
+$('btnHostStart').addEventListener('click',guard(function(){sfx('pop');hostStart();}));
+$('btnLeave').addEventListener('click',guard(function(){sfx('tap');leaveRoom();}));
+
+var LS={count:5,rpp:2,names:[],emos:[]};
+function buildSetup(){
+  $('pVal').textContent=String(LS.count);$('lrVal').textContent=String(LS.rpp);
+  $('lrNote').textContent='รวมทั้งหมด '+(LS.count*LS.rpp)+' ตา';
+  var box=$('setupList');clear(box);
+  for(var i=0;i<LS.count;i++){
+    if(!LS.emos[i])LS.emos[i]=AVA[i%AVA.length];
+    (function(i){
+      var row=el('div');row.style.display='flex';row.style.gap='10px';row.style.marginBottom='10px';row.style.alignItems='center';
+      var eb=el('button','emojiBtn',LS.emos[i]);eb.type='button';
+      eb.addEventListener('click',guard(function(){openAva(i);}));
+      var inp=document.createElement('input');inp.type='text';inp.maxLength=14;
+      inp.placeholder='ผู้เล่น '+(i+1);inp.value=LS.names[i]||'';
+      inp.addEventListener('input',function(){LS.names[i]=inp.value;});
+      row.appendChild(eb);row.appendChild(inp);box.appendChild(row);
+    })(i);
+  }
+}
+var avaTarget=-1;
+function openAva(i){
+  avaTarget=i;
+  var g=$('avaGrid2');clear(g);
+  for(var k=0;k<AVA.length;k++)(function(k){
+    var b=el('button',LS.emos[avaTarget]===AVA[k]?'sel':null,AVA[k]);b.type='button';
+    b.addEventListener('click',guard(function(){LS.emos[avaTarget]=AVA[k];sfx('tap');$('avaModal').classList.remove('active');buildSetup();}));
+    g.appendChild(b);})(k);
+  $('avaModal').classList.add('active');
+}
+$('btnAvaClose').addEventListener('click',guard(function(){$('avaModal').classList.remove('active');}));
+$('pPlus').addEventListener('click',guard(function(){if(LS.count<10){LS.count++;sfx('tap');buildSetup();}}));
+$('pMinus').addEventListener('click',guard(function(){if(LS.count>3){LS.count--;sfx('tap');buildSetup();}}));
+$('lrPlus').addEventListener('click',guard(function(){if(LS.rpp<5){LS.rpp++;sfx('tap');buildSetup();}}));
+$('lrMinus').addEventListener('click',guard(function(){if(LS.rpp>1){LS.rpp--;sfx('tap');buildSetup();}}));
+$('btnSetupBack').addEventListener('click',guard(function(){sfx('tap');show('sc-home');}));
+$('btnSetupGo').addEventListener('click',guard(function(){
+  var ps=[],seen={};
+  for(var i=0;i<LS.count;i++){
+    var v=(LS.names[i]||'').trim();if(!v)v='ผู้เล่น '+(i+1);
+    if(seen[v])v=v+' ('+(i+1)+')';seen[v]=1;
+    ps.push({name:v,emoji:LS.emos[i]||AVA[i%AVA.length],score:0,connected:true});
+  }
+  NET.role=null;NET.code=null;
+  newGame('local',ps,LS.rpp);sfx('pop');startTurn();
+}));
+$('btnDealOpen').addEventListener('click',guard(function(){sfx('pop');renderCard();}));
+$('btnCardHide').addEventListener('click',guard(function(){
+  clear($('cardAns'));$('cardQ').textContent='';$('cardT').textContent='';$('cardH').textContent='';
+  sfx('tap');G.dealIdx++;
+  if(G.dealIdx>=G.players.length){G.phase='board';pushAll();}else renderDeal();
+}));
+$('btnGoHunt').addEventListener('click',guard(function(){
+  if(G&&G.mode==='local')goHunt(G.qIdx);
+  else if(NET.role==='host')goHunt(0);
+  else clientAct('hunt');
+}));
+$('btnStop').addEventListener('click',guard(function(){
+  sfx('tap');
+  if(G&&G.mode==='local')doStop(G.qIdx);
+  else if(NET.role==='host')doStop(0);
+  else clientAct('stop');
+}));
+$('btnNextTurn').addEventListener('click',guard(function(){
+  sfx('pop');
+  if(G&&G.mode==='local')nextTurn(-1);
+  else if(NET.role==='host')nextTurn(0);
+  else clientAct('next');
+}));
+$('btnAgain').addEventListener('click',guard(function(){
+  sfx('pop');
+  if(G&&G.mode==='local')playAgain(-1);
+  else if(NET.role==='host')playAgain(0);
+  else clientAct('again');
+}));
+$('btnHome2').addEventListener('click',guard(function(){
+  sfx('tap');
+  if(NET.role)leaveRoom();else{G=null;hudOff();show('sc-home');}
+  refreshRejoin();
+}));
+$('btnEmptyReset').addEventListener('click',guard(function(){
+  resetUsed();sfx('good');
+  if(G&&G.players&&G.players.length)startTurn();else{hudOff();show('sc-home');}
+}));
+$('btnEmptyHome').addEventListener('click',guard(function(){sfx('tap');hudOff();show('sc-home');}));
+$('btnSfx').addEventListener('click',guard(function(){sfxOn=!sfxOn;$('btnSfx').textContent=sfxOn?'🔊 SFX':'🔇 SFX';if(sfxOn)sfx('tap');}));
+$('btnMusic').addEventListener('click',guard(function(){musicOn=!musicOn;$('btnMusic').textContent=musicOn?'🎵 ON':'🎵 OFF';if(musicOn){ac();startMusic();}else stopMusic();}));
+$('btnHelp').addEventListener('click',guard(function(){sfx('tap');$('helpModal').classList.add('active');}));
+$('btnHelpClose').addEventListener('click',guard(function(){sfx('tap');$('helpModal').classList.remove('active');}));
+
+/* ============ boot ============ */
+loadUsed();loadProfile();updateStats();refreshRejoin();
+$('netNote').textContent=peerReady()
+  ? '🌐 โหมดออนไลน์พร้อมใช้งาน (P2P — เครื่องโฮสต์รันเกมทั้งหมด)'
+  : '⚠️ โหลดไลบรารี P2P ไม่สำเร็จ — ใช้ได้เฉพาะโหมด Local (ต้องเปิดผ่าน http/https)';
+buildSetup();
+show('sc-home');
+
+/* ============ self test ============ */
+(function(){try{
+  var ids={},dup=0,noSrc=0;
+  for(var i=0;i<ALL.length;i++){if(ids[ALL[i].id])dup++;ids[ALL[i].id]=1;if(!ALL[i].src)noSrc++;}
+  if(window.console&&console.log)console.log('[SOUND FISHY v3] Q='+ALL.length+' dup='+dup+' noSource='+noSrc+' used='+usedCount+' peer='+peerReady());
+  if(dup)showError('พบ id คำถามซ้ำ '+dup+' รายการ');
+}catch(e){showError('selfTest: '+e.message);}})();
+})();
+</script>
+</body>
+</html>
